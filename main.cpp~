@@ -1,0 +1,10 @@
+#include <iostream>
+#include "gpu_asm.hpp"
+
+using namespace std;
+
+
+int main()
+{
+	
+}

@@ -1,0 +1,87 @@
+architecture R800 Evergreen;
+
+microcode ALU_WORD0(31:0):
+	enum(9) SRC_REG:
+		GPR 127:0;
+		Kcache_bank0 159:128;
+		Kcache_bank1 191:160;
+		inline_const 255:192;
+		Kcache_bank2 287:256;
+		Kcache_bank3 319:288;
+		ALU_SRC_LDS_OQ_A 219;
+		ALU_SRC_HW_WAVE_ID 231; 
+		ALU_SRC_SIMD_ID 232;
+		/* ... */
+	end enum;
+	
+	enum(2) CHAN_SEL:
+		CHAN_X;
+		CHAN_Y;
+		CHAN_Z;
+		CHAN_W;
+	end enum;
+	
+	enum(6) INDEX_MODE:
+		INDEX_AR_X 0;
+		INDEX_LOOP 4;
+		INDEX_GLOBAL 5;
+		INDEX_GLOBAL_AR_X 6;
+	end enum;
+	
+	enum(2) PRED_SEL:
+		PRED_SEL_OFF 0;
+		PRED_SEL_ZERO 2;
+		PRED_SEL_ONE 3;
+	end enum;
+	
+	field SRC0_SEL(8:0) SRC_REG;
+	field SRC1_SEL(21:13) SRC_REG;
+	field SRC0_REL(9) BOOL;
+	field SRC1_REL(22) BOOL;
+	field SRC0_CHAN(11:10) CHAN_SEL;
+	field SRC1_CHAN(24:23) CHAN_SEL;
+	field SRC0_NEG(12) BOOL;
+	field SRC1_NEG(25) BOOL;
+	field INDEX_MODE(28:26) INDEX_MODE;
+	field PRED_SEL(30:29) PRED_SEL;
+	field LAST BOOL;
+	
+end microcode;
+
+microcode padding_32(31:0):
+end microcode;
+
+microcode MEM_RD_WORD0(31:0):
+	enum MEM_OP(3):
+		MEM_RD_SCRATCH 0;
+		MEM_RD_SCATTER 2;
+	end enum;
+	
+	enum VC_INST(5):
+		VC_INST_MEM 2;
+	end enum;
+	
+	field VC_INST(4:0) VC_INST; 
+	field MEM_OP(10:8) MEM_OP;
+	/* TODO */
+end microcode;
+
+microcode MEM_RD_WORD1(31:0):
+	/* TODO */
+end microcode;
+
+microcode MEM_RD_WORD2(31:0):
+	/* TODO */
+end microcode;
+
+tuple MEM_RD_SCRATCH(127:0):
+	microcode MEM_RD_WORD0;
+	microcode MEM_RD_WORD1;
+	microcode MEM_RD_WORD2;
+	microcode padding_32;
+	
+	constraints:
+		MEM_RD_WORD0.VC_INST == VC_INST_MEM;
+		MEM_RD_WORD0.MEM_OP == MEM_RD_SCRATCH;
+	end constraints;
+end tuple;
