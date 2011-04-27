@@ -13,9 +13,9 @@ microcode ALU_WORD0(31:0):
 		ALU_SRC_SIMD_ID 232;
 		/* ... */
 	end enum;
-	
+
 	enum(2) CHAN_SEL:
-		CHAN_X;
+		CHAN_X r;
 		CHAN_Y;
 		CHAN_Z;
 		CHAN_W;
@@ -44,7 +44,7 @@ microcode ALU_WORD0(31:0):
 	field SRC1_NEG(25) BOOL;
 	field INDEX_MODE(28:26) INDEX_MODE;
 	field PRED_SEL(30:29) PRED_SEL;
-	field LAST BOOL;
+	field LAST(31) BOOL;
 	
 end microcode;
 
@@ -52,12 +52,12 @@ microcode padding_32(31:0):
 end microcode;
 
 microcode MEM_RD_WORD0(31:0):
-	enum MEM_OP(3):
+	enum(3) MEM_OP:
 		MEM_RD_SCRATCH 0;
 		MEM_RD_SCATTER 2;
 	end enum;
 	
-	enum VC_INST(5):
+	enum(5) VC_INST:
 		VC_INST_MEM 2;
 	end enum;
 	
@@ -85,3 +85,5 @@ tuple MEM_RD_SCRATCH(127:0):
 		MEM_RD_WORD0.MEM_OP == MEM_RD_SCRATCH;
 	end constraints;
 end tuple;
+
+end;
