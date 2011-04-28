@@ -45,8 +45,6 @@ microcode ALU_WORD0(32):
 	field INDEX_MODE(28:26) INDEX_MODE;
 	field PRED_SEL(30:29) PRED_SEL;
 	field LAST(31) BOOL;
-	field TEST(40:35) INT(23:0);
-	
 end microcode;
 
 microcode padding_32(32):

@@ -140,6 +140,7 @@ struct new_microcode_a
 		}
 		
 		asmdef->microcode_formats[attrib.cur_micro].size_in_bits = attrib.cur_size;
+		asmdef->microcode_formats[attrib.cur_micro].name = attrib.cur_micro;
 	}
 };
 
@@ -208,7 +209,56 @@ struct new_field_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		bool found = false;
+		auto fields = asmdef->microcode_formats.at(attrib.cur_micro).fields;
 		
+		for (int i = 0; i < int(fields.size()); i++)
+		{
+			if (fields[i].name == attrib.cur_field)
+			{
+				found = true;
+			}
+		}
+		
+		if (found)
+		{
+			throw std::runtime_error("Redefinition of field: " + attrib.cur_micro + "." + attrib.cur_field);
+		}
+		
+		field ff;
+		
+		ff.name = attrib.cur_field;
+		ff.bits = attrib.cur_bound;
+		
+		if (attrib.cur_type == "INT")
+		{
+			ff.numeric = true;
+			ff.flag = false;
+			ff.numeric_bounds = attrib.cur_bound2;
+			
+			if (attrib.cur_bound2.start == -1)
+			{
+				ff.numeric_bounds.stop = 0;
+				ff.numeric_bounds.start = int(pow(2, abs(ff.bits.start-ff.bits.stop)+1));
+			}
+		}
+		else if (attrib.cur_type == "BOOL")
+		{
+			ff.numeric = false;
+			ff.flag = true;
+		}
+		else
+		{
+			if (asmdef->microcode_formats.at(attrib.cur_micro).enums.count(attrib.cur_type) == 0)
+			{
+				throw std::runtime_error("Undefined type: " + attrib.cur_micro + "." + attrib.cur_type);
+			}
+			
+			ff.vals = asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_type);
+			ff.enum_name = attrib.cur_type;
+		}
+		
+		asmdef->microcode_formats.at(attrib.cur_micro).fields.push_back(ff);
 	}
 };
 
@@ -224,6 +274,42 @@ struct new_constraint_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		if (asmdef->microcode_formats.count(attrib.cur_micro))
+		{
+		}
+		
+		bool found = false;
+		auto fields = asmdef->microcode_formats.at(attrib.cur_micro).fields;
+		field ff;
+		
+		for (int i = 0; i < int(fields.size()); i++)
+		{
+			if (fields[i].name == attrib.cur_field)
+			{
+				found = true;
+				ff = fields[i];
+			}
+		}
+		
+		if (!found)
+		{
+			throw std::runtime_error("Undefined field: " + attrib.cur_micro + "." + attrib.cur_field);
+		}
+		
+		enum_val val;
+		val.name = attrib.cur_elem;
+		
+		if (ff.vals.size() == 0)
+		{
+			throw std::runtime_error("Field is not a valid enum: " + attrib.cur_micro + "." + attrib.cur_field);
+		}
+		
+		if (!ff.vals.count(val))
+		{
+			throw std::runtime_error("Undefined element of an enum: " + attrib.cur_micro + "." + attrib.cur_field + "." + ff.enum_name +  "." + attrib.cur_elem);
+		}
+		
+		asmdef->microcode_format_tuples.at(attrib.cur_tuple).constraints[make_pair(attrib.cur_micro, attrib.cur_field)] = attrib.cur_elem;
 	}
 };
 
@@ -239,6 +325,13 @@ struct new_tuple_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		if (asmdef->microcode_format_tuples.count(attrib.cur_tuple))
+		{
+			throw std::runtime_error("Redefinition of microcode format tuple: " + attrib.cur_tuple);
+		}
+		
+		asmdef->microcode_format_tuples[attrib.cur_tuple].size_in_bits = attrib.cur_size;
+		asmdef->microcode_format_tuples[attrib.cur_tuple].name = attrib.cur_tuple;
 	}
 };
 
@@ -254,6 +347,12 @@ struct push_micro_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		if (!asmdef->microcode_formats.count(attrib.cur_micro))
+		{
+			throw std::runtime_error("Undefined microcode format: " + attrib.cur_tuple + "." + attrib.cur_micro);
+		}
+		
+		asmdef->microcode_format_tuples[attrib.cur_tuple].tuple.push_back(attrib.cur_micro);
 	}
 };
 

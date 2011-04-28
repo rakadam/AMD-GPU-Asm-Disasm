@@ -50,6 +50,7 @@ struct field
 	
 	//enum
 	std::set<enum_val> vals; 
+	std::string enum_name;
 };
 
 struct microcode_format
@@ -65,7 +66,7 @@ struct microcode_format_tuple
 	std::string name;
 	int size_in_bits;
 	std::vector<std::string> tuple;
-	std::map<std::string, std::string> constraints; //KEY,VALUE pairs of field constraints in this format tuple
+	std::map<std::pair<std::string, std::string>, std::string> constraints; //KEY,VALUE pairs of field constraints in this format tuple
 };
 
 struct asm_definition
