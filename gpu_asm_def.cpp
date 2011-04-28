@@ -78,6 +78,13 @@ void print_info(boost::spirit::info const& what, bool detailed = false)
 
 namespace gpu_asm{
 
+struct cur_attrib
+{
+	bound cur_bound;
+	int cur_size;
+	std::string cur_micro, cur_type, cur_enum, cur_elem, cur_field, cur_tuple;
+};
+
 struct assign_str
 {
 	std::string& str;
@@ -92,11 +99,130 @@ struct assign_str
 	}
 };
 
+struct assign_int
+{
+	int& i;
+	
+	assign_int(int& i) : i(i)
+	{
+	}
+	
+	void operator()(const int& i_, qi::unused_type, qi::unused_type) const
+	{
+		i = i_;
+	}
+};
+
 struct print_str
 {
 	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
 	{
 		cout << std::string(s.begin(), s.end()) << endl;
+	}
+};
+
+struct new_microcode_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_microcode_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct new_elem_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_elem_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct new_enum_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_enum_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct new_field_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_field_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct new_constraint_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_constraint_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct new_tuple_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	new_tuple_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+	}
+};
+
+struct push_micro_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	push_micro_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
 	}
 };
 
@@ -120,35 +246,50 @@ std::string asm_definition::clear_comments(std::string text)
 	return std::string(result.begin(), result.end());
 }
 
+#define name_(s) name[assign_str(attr.cur_ ## s)]
+#define bstart_ int_[assign_int( attr.cur_bound.start )]
+#define bstop_ int_[assign_int( attr.cur_bound.stop )]
+#define bpos_ int_[assign_int( attr.cur_bound.start )][assign_int( attr.cur_bound.stop )]
+
+#define new_microcode new_microcode_a(this, attr)
+#define new_elem new_elem_a(this, attr)
+#define new_enum new_enum_a(this, attr)
+#define new_field new_field_a(this, attr)
+#define new_constraint new_constraint_a(this, attr)
+#define new_tuple new_tuple_a(this, attr)
+#define push_micro push_micro_a(this, attr)
+
+
 asm_definition::asm_definition(std::string text)
 {
 	text = clear_comments(text);
-	bound cur_bound;
+	cur_attrib attr;
+	
 	std::map<std::string, std::set<enum_val> > enums;
 	
 	auto name = lexeme[*(alnum >> *lit("_"))];
 	
 	auto header = "architecture" > name[assign_str(arch_techname)] > name[assign_str(arch_codename)] > ';';
-	auto bbound_p = ('(' >> int_ >> ')') | ('(' >> int_ >> ':' >> int_ >> ')'); 
-	auto bound_p = (int_ >> ':' >> int_) | int_; 
-	auto size_p = ('(' > int_ > ')');
+	auto bbound_p = ('(' >> bpos_ >> ')') | ('(' >> bstart_ >> ':' >> bstop_ >> ')'); 
+	auto bound_p = (bstart_ >> ':' >> bstop_) | bpos_; 
+	auto size_p = ('(' > int_[assign_int(attr.cur_size)] > ')');
 	
 	auto debug = lexeme[(*char_)[print_str()]];
-	auto enum_elem = !lit("end") > name > -bound_p > ';';
-	auto enum_def = "enum" > size_p > name > ':' > *enum_elem > "end" > "enum" > ';';
-	auto field = "field" > name > bbound_p > name >> ';';
-	auto microcode_def = "microcode" > name >  bbound_p > ':'  > *(enum_def | field)  > "end" > "microcode" > ';';
-	auto microcode_use = "microcode" > name >> ';';
-	auto constraint_def = !lit("end") > name > '.' > name > "==" > name > ';';
+	auto enum_elem = !lit("end") > name_(elem)[ref_(attr.cur_bound.start) = -1] > -bound_p > lit(';')[new_elem];
+	auto enum_def = "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';';
+	auto field = "field" > name_(field) > bbound_p > name_(type) > lit(';')[new_field];
+	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
+	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
+	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];
 	auto constraints_def = "constraints" >> lit(':') > *constraint_def > "end" > "constraints" > ';';
-	auto tuple_def = "tuple" > name >  bbound_p > ':'  > *microcode_use > -constraints_def > "end" > "tuple" > ';';
+	auto tuple_def = "tuple" > name_(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > -constraints_def > "end" > "tuple" > ';';
 	
 	auto begin = text.begin();
 	auto end = text.end();
 	
 	int linenum = 0;
 	
-	for (int i = 0; i < text.length(); i++)
+	for (int i = 0; i < int(text.length()); i++)
 		if (text[i] == '\n')
 			linenum++;
 	
@@ -162,7 +303,7 @@ asm_definition::asm_definition(std::string text)
 		
 		int gotlinenum = 0;
 		
-		for (int i = 0; i < got.length(); i++)
+		for (int i = 0; i < int(got.length()); i++)
 			if (got[i] == '\n')
 				gotlinenum++;
 
@@ -189,7 +330,7 @@ asm_definition::asm_definition(std::string text)
 		
 		int pos2 = text.length();
 		
-		for (int i = pos; i < text.length(); i++)
+		for (int i = pos; i < int(text.length()); i++)
 		{
 			if (text[i] == '\n')
 			{

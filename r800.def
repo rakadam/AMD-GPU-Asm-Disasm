@@ -1,6 +1,6 @@
 architecture R800 Evergreen;
 
-microcode ALU_WORD0(31:0):
+microcode ALU_WORD0(32):
 	enum(9) SRC_REG:
 		GPR 127:0;
 		Kcache_bank0 159:128;
@@ -15,7 +15,7 @@ microcode ALU_WORD0(31:0):
 	end enum;
 
 	enum(2) CHAN_SEL:
-		CHAN_X r;
+		CHAN_X;
 		CHAN_Y;
 		CHAN_Z;
 		CHAN_W;
@@ -48,10 +48,10 @@ microcode ALU_WORD0(31:0):
 	
 end microcode;
 
-microcode padding_32(31:0):
+microcode padding_32(32):
 end microcode;
 
-microcode MEM_RD_WORD0(31:0):
+microcode MEM_RD_WORD0(32):
 	enum(3) MEM_OP:
 		MEM_RD_SCRATCH 0;
 		MEM_RD_SCATTER 2;
@@ -66,20 +66,20 @@ microcode MEM_RD_WORD0(31:0):
 	/* TODO */
 end microcode;
 
-microcode MEM_RD_WORD1(31:0):
+microcode MEM_RD_WORD1(32):
 	/* TODO */
 end microcode;
 
-microcode MEM_RD_WORD2(31:0):
+microcode MEM_RD_WORD2(32):
 	/* TODO */
 end microcode;
 
-tuple MEM_RD_SCRATCH(127:0):
+tuple MEM_RD_SCRATCH(128):
 	microcode MEM_RD_WORD0;
 	microcode MEM_RD_WORD1;
 	microcode MEM_RD_WORD2;
 	microcode padding_32;
-	
+
 	constraints:
 		MEM_RD_WORD0.VC_INST == VC_INST_MEM;
 		MEM_RD_WORD0.MEM_OP == MEM_RD_SCRATCH;

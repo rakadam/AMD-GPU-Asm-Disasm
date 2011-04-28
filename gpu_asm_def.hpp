@@ -10,8 +10,8 @@ namespace gpu_asm
 	
 struct bound
 {
-	long start;
-	long stop;
+	int start;
+	int stop;
 };
 
 struct enum_val
@@ -56,14 +56,16 @@ struct field
 
 struct microcode_format
 {
-	bound bits;
+	int size_in_bits;
 	std::string name;
 	std::vector<field> fields;
+	std::map<std::string, std::set<enum_val> > enums;
 };
 
 struct microcode_format_tuple
 {
 	std::string name;
+	int size_in_bits;
 	std::vector<std::string> tuple;
 	std::map<std::string, std::string> constraints; //KEY,VALUE pairs of field constraints in this format tuple
 };
