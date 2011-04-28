@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
@@ -80,7 +81,7 @@ namespace gpu_asm{
 
 struct cur_attrib
 {
-	bound cur_bound;
+	bound cur_bound, cur_bound2;
 	int cur_size;
 	std::string cur_micro, cur_type, cur_enum, cur_elem, cur_field, cur_tuple;
 };
@@ -133,6 +134,12 @@ struct new_microcode_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		if (asmdef->microcode_formats.count(attrib.cur_micro))
+		{
+			throw std::runtime_error("Redefinition of microcode format: " + attrib.cur_micro);
+		}
+		
+		asmdef->microcode_formats[attrib.cur_micro].size_in_bits = attrib.cur_size;
 	}
 };
 
@@ -148,6 +155,23 @@ struct new_elem_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		enum_val val;
+		val.name = attrib.cur_elem;
+		val.value_bound = attrib.cur_bound;
+		
+		if (attrib.cur_bound.start == -1)
+		{
+			val.value_bound.start = asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).size();
+			val.value_bound.stop = asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).size();
+		}
+		
+		if (asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).count(val))
+		{
+			throw std::runtime_error("Redefinition of element: " + attrib.cur_micro + "." + attrib.cur_enum + "." + attrib.cur_elem);
+		}
+		
+		asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).insert(val);
+
 	}
 };
 
@@ -163,6 +187,12 @@ struct new_enum_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		if (asmdef->microcode_formats.at(attrib.cur_micro).enums.count(attrib.cur_enum))
+		{
+			throw std::runtime_error("Redefinition of enum: " + attrib.cur_enum + " in microcode format: " + attrib.cur_micro);
+		}
+		
+		asmdef->microcode_formats.at(attrib.cur_micro).enums[attrib.cur_enum];
 	}
 };
 
@@ -178,6 +208,7 @@ struct new_field_a
 	
 	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
 	{
+		
 	}
 };
 
@@ -246,10 +277,12 @@ std::string asm_definition::clear_comments(std::string text)
 	return std::string(result.begin(), result.end());
 }
 
-#define name_(s) name[assign_str(attr.cur_ ## s)]
+#define name_(s) name[assign_str(attr.cur_ ## s)][ref_(attr.cur_bound.start) = -1][ref_(attr.cur_bound2.start) = -1]
 #define bstart_ int_[assign_int( attr.cur_bound.start )]
 #define bstop_ int_[assign_int( attr.cur_bound.stop )]
 #define bpos_ int_[assign_int( attr.cur_bound.start )][assign_int( attr.cur_bound.stop )]
+#define bstart2_ int_[assign_int( attr.cur_bound2.start )]
+#define bstop2_ int_[assign_int( attr.cur_bound2.stop )]
 
 #define new_microcode new_microcode_a(this, attr)
 #define new_elem new_elem_a(this, attr)
@@ -267,17 +300,17 @@ asm_definition::asm_definition(std::string text)
 	
 	std::map<std::string, std::set<enum_val> > enums;
 	
-	auto name = lexeme[*(alnum >> *lit("_"))];
-	
+	auto name = lexeme[*(alnum | char_('_'))];
 	auto header = "architecture" > name[assign_str(arch_techname)] > name[assign_str(arch_codename)] > ';';
 	auto bbound_p = ('(' >> bpos_ >> ')') | ('(' >> bstart_ >> ':' >> bstop_ >> ')'); 
+	auto bbound2_p = '(' >> bstart2_ >> ':' >> bstop2_ >> ')'; 
 	auto bound_p = (bstart_ >> ':' >> bstop_) | bpos_; 
 	auto size_p = ('(' > int_[assign_int(attr.cur_size)] > ')');
 	
 	auto debug = lexeme[(*char_)[print_str()]];
-	auto enum_elem = !lit("end") > name_(elem)[ref_(attr.cur_bound.start) = -1] > -bound_p > lit(';')[new_elem];
+	auto enum_elem = !lit("end") > name_(elem) > -bound_p > lit(';')[new_elem];
 	auto enum_def = "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';';
-	auto field = "field" > name_(field) > bbound_p > name_(type) > lit(';')[new_field];
+	auto field = "field" > name_(field) > bbound_p > name_(type) > -bbound2_p > lit(';')[new_field];
 	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
 	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
 	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];

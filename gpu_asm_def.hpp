@@ -44,8 +44,6 @@ struct field
 	//numeric constant
 	bool numeric;
 	bound numeric_bounds;
-	int add_offset;
-	int shift_offset;
 	
 	//1bit flag
 	bool flag;
