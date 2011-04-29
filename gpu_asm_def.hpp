@@ -10,12 +10,16 @@ namespace gpu_asm
 	
 struct bound
 {
+	bound() : start(-1), stop(-1) {}
+	
 	int start;
 	int stop;
 };
 
 struct enum_val
 {
+	enum_val() : name(""), value_bound() {}
+	
 	std::string name;
 	bound value_bound; //start == stop : simple enumeration; stop > start: name can have an offset
 	
@@ -37,6 +41,8 @@ struct enum_val
 
 struct field
 {
+	field() : name(""), bits(), numeric(false), numeric_bounds(), flag(false), vals(), enum_name() {}
+	
 	std::string name;
 	
 	bound bits;
@@ -80,8 +86,33 @@ struct asm_definition
 	asm_definition(std::string text); //parse definitions from text
 private:
 	std::string clear_comments(std::string text);
+	bool check(std::ostream&);
+	bool check_tuple(std::ostream&, microcode_format_tuple);
+	bool check_format(std::ostream&, microcode_format);
 };
 
+
+//for assembly representation
+
+struct microcode_field
+{
+	std::string name;
+	long offset; //for INT it is the actual value, for enum it is offset, nothing for BOOL
+	std::string enum_elem; //empty for BOOL and INT
+};
+
+struct microcode
+{
+	std::string name;
+	std::vector<microcode_field> fields;
+};
+
+struct instruction
+{
+	std::string name;
+	
+	std::vector<microcode> microcodes;
+};
 
 }
 

@@ -13,4 +13,9 @@ int main()
 	
 	gpu_asm::asm_definition asmdef(text);
 	
+	gpu_assembler assembler(asmdef);
+	
+	ifstream f2("test.asm");
+	
+	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
 }

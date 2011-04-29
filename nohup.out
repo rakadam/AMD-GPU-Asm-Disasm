@@ -8,3 +8,9 @@ kate(12470)/Kate KateLayoutCache::relayoutLines: start 2147483647 before end 0
 kate(12470)/Kate KateLayoutCache::relayoutLines: start 2147483647 before end 0 
 kate(12470)/Kate KateLayoutCache::relayoutLines: start 2147483647 before end 0 
 kate(12470)/Kate KateLayoutCache::relayoutLines: start 2147483647 before end 0 
+kate(5872)/kdecore (services) KMimeTypeFactory::parseMagic: Now parsing  "/usr/share/mime/magic"
+kate(5872)/kdecore (services) KMimeTypeFactory::parseMagic: Now parsing  "/home/rakadam/.local/share/mime/magic"
+kate(5872)/kdecore (KLibrary) findLibraryInternal: plugins should not have a 'lib' prefix: "libkonsolepart.so"
+kate(5872)/kdeui (kdelibs): Attempt to use QAction "change-profile" with KXMLGUIFactory! 
+kate(5872)/kdeui (kdelibs): Attempt to use QAction "manage-profiles" with KXMLGUIFactory! 
+kate(5872)/Kate KateLayoutCache::relayoutLines: start 2147483647 before end 0 

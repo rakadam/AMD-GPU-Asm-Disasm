@@ -14,18 +14,6 @@ using namespace boost::spirit;
 
 using namespace std;
 
-// struct asm_definition
-// {
-// 	std::string arch_techname; //R800
-// 	std::string arch_codename; //Evergreen
-// 	
-// 	std::map<std::string, microcode_format> microcode_formats; //formats by name
-// 	std::map<std::string, microcode_format_tuple> microcode_format_tuples;
-// 	
-// 	asm_definition(std::string text); //parse definitions from text
-// };
-
-
 struct printer
 {
 		bool detailed;
@@ -67,7 +55,7 @@ struct printer
     }
 };
 
-void print_info(boost::spirit::info const& what, bool detailed = false)
+static void print_info(boost::spirit::info const& what, bool detailed = false)
 {
     using boost::spirit::basic_info_walker;
 
@@ -230,6 +218,8 @@ struct new_field_a
 		ff.name = attrib.cur_field;
 		ff.bits = attrib.cur_bound;
 		
+// 		cout << attrib.cur_field << " : " << ff.bits.start << " " << ff.bits.stop << endl;
+		
 		if (attrib.cur_type == "INT")
 		{
 			ff.numeric = true;
@@ -239,7 +229,7 @@ struct new_field_a
 			if (attrib.cur_bound2.start == -1)
 			{
 				ff.numeric_bounds.stop = 0;
-				ff.numeric_bounds.start = int(pow(2, abs(ff.bits.start-ff.bits.stop)+1));
+				ff.numeric_bounds.start = int(pow(2, abs(ff.bits.start-ff.bits.stop)+1))-1;
 			}
 		}
 		else if (attrib.cur_type == "BOOL")
@@ -367,16 +357,18 @@ std::string asm_definition::clear_comments(std::string text)
 	
 	auto comment_p1 = confix("/*", "*/")[*(char_ - "*/")];
 	auto comment_p2 = confix("//", eol)[*(char_ - eol)];
+	auto comment_p3 = confix("(*", "*)")[*(char_ - "*)")];
 
 	auto begin = text.begin();
 	auto end = text.end();
 	
-	phrase_parse(begin, end, *char_[push_back(ref_(result), _1)], comment_p1 | comment_p2);
+	phrase_parse(begin, end, *char_[push_back(ref_(result), _1)], comment_p1 | comment_p2 | comment_p3);
 	
 	return std::string(result.begin(), result.end());
 }
 
-#define name_(s) name[assign_str(attr.cur_ ## s)][ref_(attr.cur_bound.start) = -1][ref_(attr.cur_bound2.start) = -1]
+#define name_(s) name[assign_str(attr.cur_ ## s)]
+#define name_c(s) name[assign_str(attr.cur_ ## s)][ref_(attr.cur_bound.start) = -1][ref_(attr.cur_bound2.start) = -1]
 #define bstart_ int_[assign_int( attr.cur_bound.start )]
 #define bstop_ int_[assign_int( attr.cur_bound.stop )]
 #define bpos_ int_[assign_int( attr.cur_bound.start )][assign_int( attr.cur_bound.stop )]
@@ -399,7 +391,7 @@ asm_definition::asm_definition(std::string text)
 	
 	std::map<std::string, std::set<enum_val> > enums;
 	
-	auto name = lexeme[*(alnum | char_('_'))];
+	auto name = lexeme[+(alnum | char_('_'))];
 	auto header = "architecture" > name[assign_str(arch_techname)] > name[assign_str(arch_codename)] > ';';
 	auto bbound_p = ('(' >> bpos_ >> ')') | ('(' >> bstart_ >> ':' >> bstop_ >> ')'); 
 	auto bbound2_p = '(' >> bstart2_ >> ':' >> bstop2_ >> ')'; 
@@ -407,14 +399,14 @@ asm_definition::asm_definition(std::string text)
 	auto size_p = ('(' > int_[assign_int(attr.cur_size)] > ')');
 	
 	auto debug = lexeme[(*char_)[print_str()]];
-	auto enum_elem = !lit("end") > name_(elem) > -bound_p > lit(';')[new_elem];
+	auto enum_elem = !lit("end") > name_c(elem) > -bound_p > lit(';')[new_elem];
 	auto enum_def = "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';';
-	auto field = "field" > name_(field) > bbound_p > name_(type) > -bbound2_p > lit(';')[new_field];
+	auto field = "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p > lit(';')[new_field];
 	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
 	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
 	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];
 	auto constraints_def = "constraints" >> lit(':') > *constraint_def > "end" > "constraints" > ';';
-	auto tuple_def = "tuple" > name_(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > -constraints_def > "end" > "tuple" > ';';
+	auto tuple_def = "tuple" > name_c(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > -constraints_def > "end" > "tuple" > ';';
 	
 	auto begin = text.begin();
 	auto end = text.end();
@@ -489,9 +481,142 @@ asm_definition::asm_definition(std::string text)
 		}
 		
 		cout << "^" << endl;
+		
+		throw std::runtime_error("Syntax error");
+	}
+	
+	if (!check(cerr))
+	{
+		throw std::runtime_error("Semantic error");
 	}
 }
 
+bool asm_definition::check(std::ostream& o)
+{
+	for (auto i = microcode_format_tuples.begin(); i != microcode_format_tuples.end(); i++)
+	{
+		if (!check_tuple(o, i->second))
+			return false;
+	}
+	
+	for (auto i = microcode_formats.begin(); i != microcode_formats.end(); i++)
+	{
+		if (!check_format(o, i->second))
+			return false;
+	}
+	
+	return true;
+}
+
+bool asm_definition::check_tuple(std::ostream& o, microcode_format_tuple t)
+{
+	int true_size = 0;
+	std::set<std::string> code_names;
+	
+	for (int i = 0; i < int(t.tuple.size()); i++)
+	{
+		code_names.insert(t.tuple[i]);
+		true_size += microcode_formats.at(t.tuple[i]).size_in_bits;
+		assert(microcode_formats.at(t.tuple[i]).name == t.tuple[i]);
+	}
+	
+	for (auto i = t.constraints.begin(); i != t.constraints.end(); i++)
+	{
+		if (!code_names.count(i->first.first))
+		{
+			o << "microcode format is not in tuple: " << t.name << "." << i->first.first << endl;
+			return false;
+		}
+	}
+	
+	if (true_size > t.size_in_bits)
+	{
+		o << "Tuple " << t.name << " is bigger (" << true_size << ")" << "than the nominal size: " << t.size_in_bits << endl;
+		return false;
+	}
+	
+	if (true_size < t.size_in_bits)
+	{
+		o << "Tuple " << t.name << " is smaller (" << true_size << ")" << "than the nominal size: " << t.size_in_bits << endl;
+	}
+	
+	return true;
+}
+
+bool asm_definition::check_format(std::ostream& o, microcode_format f)
+{
+	int true_size = 0;
+	std::map<int, bool> bit_usage;
+	
+	for (int i = 0; i < int(f.fields.size()); i++)
+	{
+		int cur_size = abs(f.fields[i].bits.start-f.fields[i].bits.stop)+1;
+		true_size += cur_size;
+		
+		if (f.fields[i].numeric)
+		{
+			long max_val = std::max(f.fields[i].numeric_bounds.start, f.fields[i].numeric_bounds.stop);
+			
+			long c_max_val = pow(2, cur_size);
+			
+			if (max_val >= c_max_val)
+			{
+				o << "Representation overflow at field: " << f.name << "." << f.fields[i].name << " " << max_val << " > " << c_max_val-1 << "(" << cur_size << " bits)" << endl;
+				return false;
+			}
+		}
+		else if (f.fields[i].vals.size())
+		{
+			for (auto j = f.fields[i].vals.begin(); j != f.fields[i].vals.end(); j++)
+			{
+				long max_val = std::max(j->value_bound.start, j->value_bound.stop);
+				
+				long c_max_val = pow(2, cur_size);
+				
+				if (max_val >= c_max_val)
+				{
+					o << "Representation overflow at field: " << f.name << "." << f.fields[i].name << " " << max_val << " > " << c_max_val-1 << "(" << cur_size << " bits)" << " in elem: " << f.fields[i].enum_name << "." << j->name << endl;
+					return false;
+				}
+			}
+		}
+		else if (f.fields[i].flag)
+		{
+			if (cur_size != 1)
+			{
+				o << "Field " << f.name << "." << f.fields[i].name << " is a flag, but it occupies " << cur_size << " bits instead of one" << endl;
+				return false;
+			}
+		}
+		else
+		{
+			o << "Field " << f.name << "." << f.fields[i].name << " has no valid type" << endl;
+			return false;
+		}
+		
+		long begin = std::min(f.fields[i].bits.start, f.fields[i].bits.stop);
+		long end = std::max(f.fields[i].bits.start, f.fields[i].bits.stop);
+		
+		if (std::max(begin, end) >= f.size_in_bits)
+		{
+			o << "Field " << f.name << "." << f.fields[i].name << " uses bits outside the microcode format range: " << end << " > " << f.size_in_bits-1 << endl;
+			return false;
+		}
+		
+		for (int j = begin; j <= end; j++)
+		{
+			if (bit_usage[j])
+			{
+				o << "Bit " << j << " was reused at: " << f.name << "." << f.fields[i].name << endl;
+				true_size--;
+			}
+			
+			bit_usage[j] = true;
+		}
+	}
+	
+	return true;
+}
 
 
 }
