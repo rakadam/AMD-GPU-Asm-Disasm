@@ -45,4 +45,15 @@ int main()
 	ifstream f2("test.asm");
 	
 	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
+	
+	for (int i = 0; i < codes.size(); i++)
+	{
+		printf("%i : 0x%.8X\n", i, codes[i]);
+	}
+	
+	FILE *f3 = fopen("ki.dat", "w");
+	
+	fwrite(&codes[0], 1, sizeof(uint32_t)*codes.size(), f3);
+	
+	fclose(f3);
 }

@@ -15,7 +15,9 @@ public:
 	std::vector<uint32_t> assemble_instruction(gpu_asm::instruction);
 	void assemble_literals(std::vector<uint32_t>& data, const std::vector<int>& literal_mapping, gpu_asm::instruction);
 	void assemble_fields(std::vector<uint32_t>& data, gpu_asm::instruction);
-	gpu_asm::field get_field_def(gpu_asm::instruction, gpu_asm::microcode_field);
+	gpu_asm::field get_field_def(gpu_asm::instruction, gpu_asm::microcode_field, int& pos);
+	uint32_t gen_field_mask(gpu_asm::field, gpu_asm::microcode_field, gpu_asm::instruction);
+	uint32_t gen_mask(long value, gpu_asm::field, gpu_asm::instruction);
 };
 
 class gpu_disassembler

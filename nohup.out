@@ -22,3 +22,5 @@ kate(5523)/kdeui (kdelibs): Attempt to use QAction "manage-profiles" with KXMLGU
 kate(5826)/kdecore (services) KMimeTypeFactory::parseMagic: Now parsing  "/usr/share/mime/magic"
 kate(5826)/kdecore (services) KMimeTypeFactory::parseMagic: Now parsing  "/home/rakadam/.local/share/mime/magic"
 kate(5826)/kdecore (KLibrary) findLibraryInternal: plugins should not have a 'lib' prefix: "libkonsolepart.so"
+kate(5826)/kdeui (kdelibs): Attempt to use QAction "change-profile" with KXMLGUIFactory! 
+kate(5826)/kdeui (kdelibs): Attempt to use QAction "manage-profiles" with KXMLGUIFactory! 

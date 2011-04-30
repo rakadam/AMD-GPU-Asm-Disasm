@@ -171,7 +171,9 @@ struct set_num
 	{
 // 		cout << i << endl;
 		istream.back().microcodes.back().fields.back().offset = i;
+		istream.back().microcodes.back().fields.back().offset_is_set = true;
 		istream.back().fields.back().offset = i;
+		istream.back().fields.back().offset_is_set = true;
 	}
 };
 

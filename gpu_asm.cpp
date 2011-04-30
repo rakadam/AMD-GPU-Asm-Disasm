@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <sstream>
 #include <cstdio>
+#include <cmath>
 #include "gpu_asm.hpp"
 #include "asm_parser.hpp"
 
@@ -120,13 +121,101 @@ void gpu_assembler::assemble_fields(std::vector<uint32_t>& data, gpu_asm::instru
 {
 	for (int i = 0; i < int(instr.fields.size()); i++)
 	{
-		gpu_asm::field field_def = get_field_def(instr, instr.fields[i]);
+		if (instr.fields[i].name.substr(0, 2) == "0x")
+		{
+			continue;
+		}
 		
+		int pos = 0;
+		gpu_asm::field field_def = get_field_def(instr, instr.fields[i], pos);
 		
+		uint32_t mask = gen_field_mask(field_def, instr.fields[i], instr);
+		
+		data[pos] |= mask;
 	}
 }
 
-gpu_asm::field gpu_assembler::get_field_def(gpu_asm::instruction instr, gpu_asm::microcode_field field)
+uint32_t gpu_assembler::gen_field_mask(gpu_asm::field field_def, gpu_asm::microcode_field field, gpu_asm::instruction instr)
+{
+	if (field_def.numeric)
+	{
+		if (field.enum_elem != "")
+		{
+			throw runtime_error("Field is an INT not an enum: " + instr.name + "." + field.name + " invalid enum elem: \"" + field.enum_elem + "\"");
+		}
+		
+		return gen_mask(field.offset, field_def, instr);
+	}
+	
+	if (field_def.flag)
+	{
+		if (field.enum_elem != "")
+		{
+			throw runtime_error("Field is a BOOL not an enum: " + instr.name + "." + field.name + " invalid enum elem: \"" + field.enum_elem + "\"");
+		}
+		
+		if (field.offset_is_set)
+		{
+			throw runtime_error("Field is a BOOL not an INT, you should not set its value: " + instr.name + "." + field.name);
+		}
+		
+		return gen_mask(1, field_def, instr);
+	}
+	
+	if (field_def.vals.size())
+	{
+		gpu_asm::enum_val enum_val;
+		enum_val.name = field.enum_elem;
+		
+		if (field_def.vals.count(enum_val) == 0)
+		{
+			throw runtime_error("Enum elem is undefined in field: " + instr.name + "." + field.name + " invalid enum elem: \"" + field.enum_elem + "\"");
+		}
+		
+		enum_val = *field_def.vals.find(enum_val);
+		
+		long value = min(enum_val.value_bound.start, enum_val.value_bound.stop);
+		long max_val = max(enum_val.value_bound.start, enum_val.value_bound.stop);
+		
+		if (field.offset_is_set)
+		{
+			value += field.offset;
+			
+			if (value > max_val)
+			{
+				stringstream ss;
+				ss << "Enum offset is out of bounds: "+ instr.name + "." + field.name + "." + field.enum_elem  << " offset: " << field.offset << endl;
+				
+				throw runtime_error(ss.str());
+			}
+		}
+		
+		return gen_mask(value, field_def, instr);
+	}
+	
+	throw runtime_error("Invalid field in the definition: " + field_def.name);
+}
+
+uint32_t gpu_assembler::gen_mask(long value, gpu_asm::field field_def, gpu_asm::instruction instr)
+{
+	int start = min(field_def.bits.start, field_def.bits.stop);
+	int stop = max(field_def.bits.start, field_def.bits.stop);
+	int len = stop-start+1;
+	long maxval = pow(2, len)-1;
+	
+// 	cout << value << " " << maxval << endl;
+	if (value > maxval)
+	{
+		throw runtime_error("Value is out of bounds in: " + instr.name + "." + field_def.name);
+	}
+	
+	uint32_t mask = value << start;
+	
+	return mask;
+}
+
+
+gpu_asm::field gpu_assembler::get_field_def(gpu_asm::instruction instr, gpu_asm::microcode_field field, int& pos)
 {
 	gpu_asm::microcode_format_tuple tuple = asmdef.microcode_format_tuples.at(instr.name);
 	
@@ -138,6 +227,7 @@ gpu_asm::field gpu_assembler::get_field_def(gpu_asm::instruction instr, gpu_asm:
 		{
 			if (field.name == format.fields[j].name)
 			{
+				pos = i;
 				return format.fields[j];
 			}
 		}
