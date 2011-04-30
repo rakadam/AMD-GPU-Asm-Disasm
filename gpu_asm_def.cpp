@@ -72,6 +72,7 @@ struct cur_attrib
 	bound cur_bound, cur_bound2;
 	int cur_size;
 	std::string cur_micro, cur_type, cur_enum, cur_elem, cur_field, cur_tuple;
+	bool cur_default_val;
 };
 
 struct assign_str
@@ -147,11 +148,17 @@ struct new_elem_a
 		enum_val val;
 		val.name = attrib.cur_elem;
 		val.value_bound = attrib.cur_bound;
+		val.default_option = attrib.cur_default_val;
 		
 		if (attrib.cur_bound.start == -1)
 		{
 			val.value_bound.start = asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).size();
 			val.value_bound.stop = asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).size();
+		}
+		
+		if (val.default_option and (val.value_bound.start != 0 or val.value_bound.stop != 0))
+		{
+			throw std::runtime_error("Default options should evaluate to zero " + attrib.cur_micro + "." + attrib.cur_enum + "." + attrib.cur_elem);
 		}
 		
 		if (asmdef->microcode_formats.at(attrib.cur_micro).enums.at(attrib.cur_enum).count(val))
@@ -346,6 +353,24 @@ struct push_micro_a
 	}
 };
 
+
+
+struct set_default_elem_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	set_default_elem_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(qi::unused_type, qi::unused_type, qi::unused_type) const
+	{
+		attrib.cur_default_val = true;
+	}
+};
+
 #define ref_ boost::phoenix::ref
 
 std::string asm_definition::clear_comments(std::string text)
@@ -368,7 +393,7 @@ std::string asm_definition::clear_comments(std::string text)
 }
 
 #define name_(s) name[assign_str(attr.cur_ ## s)]
-#define name_c(s) name[assign_str(attr.cur_ ## s)][ref_(attr.cur_bound.start) = -1][ref_(attr.cur_bound2.start) = -1]
+#define name_c(s) name[assign_str(attr.cur_ ## s)][ref_(attr.cur_bound.start) = -1][ref_(attr.cur_bound2.start) = -1][ref_(attr.cur_default_val) = false]
 #define bstart_ int_[assign_int( attr.cur_bound.start )]
 #define bstop_ int_[assign_int( attr.cur_bound.stop )]
 #define bpos_ int_[assign_int( attr.cur_bound.start )][assign_int( attr.cur_bound.stop )]
@@ -382,7 +407,7 @@ std::string asm_definition::clear_comments(std::string text)
 #define new_constraint new_constraint_a(this, attr)
 #define new_tuple new_tuple_a(this, attr)
 #define push_micro push_micro_a(this, attr)
-
+#define set_default_elem set_default_elem_a(this, attr)
 
 asm_definition::asm_definition(std::string text)
 {
@@ -399,9 +424,9 @@ asm_definition::asm_definition(std::string text)
 	auto size_p = ('(' > int_[assign_int(attr.cur_size)] > ')');
 	
 	auto debug = lexeme[(*char_)[print_str()]];
-	auto enum_elem = !lit("end") > name_c(elem) > -bound_p > lit(';')[new_elem];
+	auto enum_elem = !lit("end") > name_c(elem) > -bound_p > -lit("default")[set_default_elem] > lit(';')[new_elem];
 	auto enum_def = "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';';
-	auto field = "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p > lit(';')[new_field];
+	auto field = "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p  > lit(';')[new_field];
 	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
 	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
 	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];

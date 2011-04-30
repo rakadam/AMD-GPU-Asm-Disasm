@@ -26,8 +26,17 @@ public:
 	std::string get_enum_value(uint32_t code, gpu_asm::field);
 	int try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_tuple(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
-	std::string parse_microcode(uint32_t code, const gpu_asm::microcode_format& format);
+	std::string parse_microcode(uint32_t code, const gpu_asm::microcode_format& format, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_field(uint32_t code, gpu_asm::field);
+	
+	long check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value = ""); //field_value == "": returns the numeric val of the field, otherwise returns a boolean
+	
+	std::string parse_literals(const std::vector<uint32_t>& data, int offset, int size);
 };
 
+namespace gpu_asm
+{
+	uint32_t byte_mirror(uint32_t);
+	std::vector<uint32_t> byte_mirror(std::vector<uint32_t>);
+};
 #endif

@@ -111,8 +111,9 @@ struct new_microcode
 	{
 	}
 	
-	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
+	void operator()(const boost::optional<vector<char>>& s_, qi::unused_type, qi::unused_type) const
 	{
+		auto s = s_.get_value_or(vector<char>(0));
 		string name(s.begin(), s.end());
 // 		cout << name << endl;
 		istream.back().microcodes.push_back(gpu_asm::microcode());
@@ -194,7 +195,7 @@ std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
 	auto name = lexeme[+(alnum | char_('_'))];
 	auto num = '(' > int_ > ')';
 	auto field = name[new_field] > -('.' > name[set_enum]) > -(num[set_num]);
-	auto microcode = (name >> '>')[new_microcode] > *field > ';';
+	auto microcode = (-name >> '>')[new_microcode] > *field > ';';
 	auto instruction = (name >> ':')[new_instruction] > *microcode;
 	
 	auto begin = text.begin();
@@ -210,4 +211,55 @@ std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
 	}
 	
 	return istream;
+}
+
+struct assign_str
+{
+	std::string& str;
+	
+	assign_str(std::string& s) : str(s)
+	{
+	}
+	
+	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
+	{
+		str = std::string(s.begin(), s.end());
+	}
+};
+
+void parse_field_value(std::string text, long offset, std::string& name)
+{
+	using boost::spirit::qi::phrase_parse;
+	using boost::spirit::qi::eps;
+	using boost::spirit::qi::lexeme;
+	using boost::spirit::qi::char_;
+	using boost::spirit::qi::alnum;
+	using boost::spirit::qi::int_;
+	using boost::spirit::ascii::space;
+	using boost::spirit::qi::expectation_failure;
+	
+	if (text == "")
+	{
+		offset = 0;
+		name = "";
+		return;
+	}
+	
+	
+	auto num = int_[boost::phoenix::ref(offset) = _1];
+	auto name_p = lexeme[+(alnum | char_('_'))][assign_str(name)];
+	auto offset_p = '(' > num > ')';
+	auto value = num | (name_p >> -offset_p);
+	
+	auto begin = text.begin();
+	auto end = text.end();
+
+	try{
+		phrase_parse(begin, end, eps > value, space);
+	} catch (expectation_failure<decltype(begin)> const& x)
+	{
+		cout << "expected: "; print_info(x.what_);
+		string got(x.first, x.last);
+		cout << "got: " << got << endl;
+	}
 }

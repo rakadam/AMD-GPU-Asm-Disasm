@@ -5,13 +5,14 @@ architecture R800 Evergreen;
 			GPR 127:0;
 			Kcache_bank0 159:128;
 			Kcache_bank1 191:160;
-			inline_const 255:192;
+			unnamed_inline_const 218:192;
 			Kcache_bank2 287:256;
 			Kcache_bank3 319:288;
 			ALU_SRC_LDS_OQ_A 219;
 			ALU_SRC_HW_WAVE_ID 231; 
 			ALU_SRC_SIMD_ID 232;
 			/* ... */
+			ALU_SRC_LITERAL 253;
 		end enum;
 
 		enum(2) CHAN_SEL:
@@ -22,14 +23,14 @@ architecture R800 Evergreen;
 		end enum;
 		
 		enum(6) INDEX_MODE:
-			INDEX_AR_X 0;
+			INDEX_AR_X 0 default;
 			INDEX_LOOP 4;
 			INDEX_GLOBAL 5;
 			INDEX_GLOBAL_AR_X 6;
 		end enum;
 		
 		enum(2) PRED_SEL:
-			PRED_SEL_OFF 0;
+			PRED_SEL_OFF 0 default;
 			PRED_SEL_ZERO 2;
 			PRED_SEL_ONE 3;
 		end enum;
@@ -47,6 +48,39 @@ architecture R800 Evergreen;
 		field LAST(31) BOOL;
 	end microcode;
 
+	microcode ALU_WORD1_OP2(32):
+		enum(2) OMOD:
+			ALU_OMOD_OFF default;
+			ALU_OMOD_M2;
+			ALU_OMOD_M4;
+			ALU_OMOD_D2;
+		end enum;
+		
+		enum(11) ALU_INST:
+			OP2_INST_ADD_INT 52;
+		end enum;
+		
+		enum(2) CHAN_SEL:
+			CHAN_X;
+			CHAN_Y;
+			CHAN_Z;
+			CHAN_W;
+		end enum;
+		
+		field SRC0_ABS(0) BOOL;
+		field SRC1_ABS(1) BOOL;
+		field UPDATE_EXEC_MASK(2) BOOL;
+		field UPDATE_PRED(3) BOOL;
+		field WRITE_MASK(4) BOOL;
+		field OMOD(6:5) OMOD;
+		field ALU_INST(17:7) ALU_INST;
+		//TODO!
+		field DST_GPR(27:21) INT;
+		field DST_REL(28) BOOL;
+		field DST_CHAN(30:29) CHAN_SEL;
+		//TODO!
+	end microcode;
+	
 	microcode padding_32(32):
 	end microcode;
 
@@ -84,6 +118,10 @@ architecture R800 Evergreen;
 		/* TODO */
 	end microcode;
 
+	microcode LITERAL_CONSTANT_32(32):
+	 /*handled internally*/
+	end microcode;
+	
 	tuple MEM_RD_SCRATCH(128):
 		microcode MEM_RD_WORD0;
 		microcode MEM_RD_WORD1;
@@ -96,4 +134,12 @@ architecture R800 Evergreen;
 		end constraints;
 	end tuple;
 
+	tuple ADD_INT(64):
+		microcode ALU_WORD0;
+		microcode ALU_WORD1_OP2;
+		
+		constraints:
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_ADD_INT;
+		end constraints;
+	end tuple;
 end;

@@ -18,10 +18,11 @@ struct bound
 
 struct enum_val
 {
-	enum_val() : name(""), value_bound() {}
+	enum_val() : name(""), value_bound(), default_option(false) {}
 	
 	std::string name;
 	bound value_bound; //start == stop : simple enumeration; stop > start: name can have an offset
+	bool default_option; //and value_bound should be 0 too!
 	
 	bool operator == (const enum_val& b) const
 	{
