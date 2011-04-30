@@ -16,9 +16,134 @@ gpu_assembler::gpu_assembler(const gpu_asm::asm_definition& asmdef) : asmdef(asm
 	
 std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 {
+	std::vector<uint32_t> data;
 	parsed_instructions = parse_asm_text(text);
 	
-	return {};
+	
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		std::vector<uint32_t> instr = assemble_instruction(parsed_instructions[i]);
+		
+		data.insert(data.end(), instr.begin(), instr.end());
+	}
+	
+	return data;
+}
+
+
+std::vector<uint32_t> gpu_assembler::assemble_instruction(gpu_asm::instruction instr)
+{
+	std::vector<uint32_t> data;
+	
+	if (asmdef.microcode_format_tuples.count(instr.name) == 0)
+	{
+		throw runtime_error("Undefine instruction: " + instr.name);
+	}
+	
+	auto tuple = asmdef.microcode_format_tuples.at(instr.name);
+	
+	
+	int instr_lit_num = 0;
+	int tuple_lit_num = 0;
+	
+	for (int i = 0; i < int(instr.fields.size()); i++)
+	{
+		if (instr.fields[i].name.substr(0, 2) == "0x")
+		{
+			instr_lit_num++;
+		}
+	}
+	
+	for (int i = 0; i < int(tuple.tuple.size()); i++)
+	{
+		if (asmdef.microcode_formats.at(tuple.tuple[i]).name.find("LITERAL_CONSTANT") != string::npos)
+		{
+			tuple_lit_num++;
+		}
+	}
+	
+	if (instr_lit_num < tuple_lit_num)
+	{
+		throw runtime_error("Not enough literals in instruction: " + instr.name);
+	}
+	
+	data.resize(tuple.size_in_bits / 32 + instr_lit_num - tuple_lit_num);
+	
+	vector<int> literal_mapping;
+	
+	for (int i = 0; i < int(tuple.tuple.size()); i++)
+	{
+		if (asmdef.microcode_formats.at(tuple.tuple[i]).name.find("LITERAL_CONSTANT") != string::npos)
+		{
+			literal_mapping.push_back(i);
+		}
+	}
+	
+	for (int i = tuple.size_in_bits / 32; i < int(data.size()); i++)
+	{
+		literal_mapping.push_back(i);
+	}
+	
+	assert(int(literal_mapping.size()) == instr_lit_num);
+	
+	assemble_literals(data, literal_mapping, instr);
+	assemble_fields(data, instr);
+	
+	return data;
+}
+
+void gpu_assembler::assemble_literals(std::vector<uint32_t>& data, const std::vector<int>& literal_mapping, gpu_asm::instruction instr)
+{
+	int lit_idx = 0;
+	
+	for (int i = 0; i < int(instr.fields.size()); i++)
+	{
+		if (instr.fields[i].name.substr(0, 2) == "0x")
+		{
+			uint32_t value = 0;
+			
+			int e = sscanf(instr.fields[i].name.c_str(), "%x", &value);
+			
+			if (e < 1)
+			{
+				throw runtime_error("Parsing error at parsing literal: " + instr.fields[i].name);
+			}
+			
+			data[literal_mapping[lit_idx]] = value;
+			
+			lit_idx++;
+		}
+	}
+}
+
+void gpu_assembler::assemble_fields(std::vector<uint32_t>& data, gpu_asm::instruction instr)
+{
+	for (int i = 0; i < int(instr.fields.size()); i++)
+	{
+		gpu_asm::field field_def = get_field_def(instr, instr.fields[i]);
+		
+		
+	}
+}
+
+gpu_asm::field gpu_assembler::get_field_def(gpu_asm::instruction instr, gpu_asm::microcode_field field)
+{
+	gpu_asm::microcode_format_tuple tuple = asmdef.microcode_format_tuples.at(instr.name);
+	
+	for (int i = 0; i < int(tuple.tuple.size()); i++)
+	{
+		gpu_asm::microcode_format format = asmdef.microcode_formats.at(tuple.tuple[i]);
+		
+		for (int j = 0; j < int(format.fields.size()); j++)
+		{
+			if (field.name == format.fields[j].name)
+			{
+				return format.fields[j];
+			}
+		}
+	}
+	
+	throw runtime_error("Undefined field: " + instr.name + "." + field.name);
 }
 
 

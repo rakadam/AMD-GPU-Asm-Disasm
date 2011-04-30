@@ -113,6 +113,7 @@ struct instruction
 	std::string name;
 	
 	std::vector<microcode> microcodes;
+	std::vector<microcode_field> fields;
 };
 
 }

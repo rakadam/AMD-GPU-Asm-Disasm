@@ -12,6 +12,10 @@ class gpu_assembler
 public:
 	gpu_assembler(const gpu_asm::asm_definition& asmdef);
 	std::vector<uint32_t> assemble(std::string text);
+	std::vector<uint32_t> assemble_instruction(gpu_asm::instruction);
+	void assemble_literals(std::vector<uint32_t>& data, const std::vector<int>& literal_mapping, gpu_asm::instruction);
+	void assemble_fields(std::vector<uint32_t>& data, gpu_asm::instruction);
+	gpu_asm::field get_field_def(gpu_asm::instruction, gpu_asm::microcode_field);
 };
 
 class gpu_disassembler

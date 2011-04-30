@@ -136,6 +136,9 @@ struct new_field
 // 		cout << name << endl;
 		istream.back().microcodes.back().fields.push_back(gpu_asm::microcode_field());
 		istream.back().microcodes.back().fields.back().name = name;
+		
+		istream.back().fields.push_back(gpu_asm::microcode_field());
+		istream.back().fields.back().name = name;
 	}
 };
 
@@ -152,6 +155,7 @@ struct set_enum
 		string name(s.begin(), s.end());
 // 		cout << name << endl;
 		istream.back().microcodes.back().fields.back().enum_elem = name;
+		istream.back().fields.back().enum_elem = name;
 	}
 };
 
@@ -167,6 +171,7 @@ struct set_num
 	{
 // 		cout << i << endl;
 		istream.back().microcodes.back().fields.back().offset = i;
+		istream.back().fields.back().offset = i;
 	}
 };
 
