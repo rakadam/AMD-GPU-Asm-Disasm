@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-	ifstream f("r800.def");
+	ifstream f("r800.def.ii");
 	
 	string text = std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
 	
@@ -15,7 +15,7 @@ int main()
 	
 	gpu_assembler assembler(asmdef);
 	
-	vector<uint32_t> code = 
+	vector<uint32_t> code;/* = 
 	{
 		0x00ac1f80,
 		0x101a2000,
@@ -33,9 +33,22 @@ int main()
 		0x101a2060,
 		0xefbe0000,
 		0x00000000
-	};
+	};*/
 	
-	code = gpu_asm::byte_mirror(code);
+	FILE *f4 = fopen("gpu_bin.bin", "r");
+	
+	uint32_t val;
+	
+	fseek(f4, 0x0, SEEK_SET);
+	
+	while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
+	{
+		code.push_back(val);
+	}
+	
+	fclose(f4);
+	
+// 	code = gpu_asm::byte_mirror(code);
 	
 	
 	gpu_disassembler dis(asmdef);

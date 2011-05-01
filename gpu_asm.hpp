@@ -24,9 +24,20 @@ class gpu_disassembler
 {
 	gpu_asm::asm_definition asmdef;
 	
+	struct tclause
+	{
+		int addr; // in dword from PGM_START_*
+		std::string prefix; //like: TEX_ ALU_ VTX_
+	};
+	
 public:
+	std::string filter_prefix; //filter by CF_ ALU_ TEX_
+	
 	gpu_disassembler(const gpu_asm::asm_definition& asmdef);
 	std::string disassemble(std::vector<uint32_t> data);
+	std::string disassemble_cf(std::vector<uint32_t> data, std::vector<tclause>& clauses);
+	std::string disassemble_clause(std::vector<uint32_t> data, tclause);
+	
 	gpu_asm::field get_field(std::string format_name, std::string field_name);
 	long get_field_value(uint32_t code, gpu_asm::bound bound);
 	std::string get_enum_value(uint32_t code, gpu_asm::field);

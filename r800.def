@@ -57,6 +57,7 @@ architecture R800 Evergreen;
 		end enum;
 		
 		enum(11) ALU_INST:
+			OP2_INST_LSHR_INT 22;
 			OP2_INST_ADD_INT 52;
 		end enum;
 		
@@ -122,6 +123,174 @@ architecture R800 Evergreen;
 	 /*handled internally*/
 	end microcode;
 	
+	microcode CF_WORD0(32):
+		enum(3) JUMPTABLE_SE:
+			CF_JUMPTABLE_SEL_CONST_A;
+			CF_JUMPTABLE_SEL_CONST_B;
+			CF_JUMPTABLE_SEL_CONST_C;
+			CF_JUMPTABLE_SEL_CONST_D;
+			CF_JUMPTABLE_SEL_INDEX_0;
+			CF_JUMPTABLE_SEL_INDEX_1;
+		end enum;
+		
+		field ADDR(23:0) INT;
+		field JUMPTABLE_SE(26:24) JUMPTABLE_SE;
+		field Reserved(31:27) INT;
+	end microcode;
+	
+	microcode CF_WORD1(32):
+		enum(2) COND:
+			CF_COND_ACTIVE;
+			CF_COND_FALSE;
+			CF_COND_BOOL;
+			CF_COND_NOT_BOOL;
+		end enum;
+		
+		enum(8) CF_INST:
+			CF_INST_NOP 0;
+			CF_INST_TC 1;
+			CF_INST_VC 2;
+			CF_INST_GDS 3;
+			CF_INST_LOOP_START 4;
+			CF_INST_LOOP_END 5;
+			CF_INST_LOOP_START_DX10 6;
+			CF_INST_LOOP_START_NO_AL 7;
+			CF_INST_LOOP_CONTINUE 8;
+			CF_INST_LOOP_BREAK 9;
+			CF_INST_JUMP 10;
+			CF_INST_PUSH 11;
+			(*reserved 12*)
+			CF_INST_ELSE 13;
+			CF_INST_POP 14;
+			(*reservec 17:15*)
+			CF_INST_CALL 18;
+			CF_INST_CALL_FS 19;
+			CF_INST_RETURN 20;
+			CF_INST_EMIT_VERTEX 21;
+			CF_INST_EMIT_CUT_VERTEX 22;
+			CF_INST_CUT_VERTEX 23;
+			CF_INST_KILL 24;
+			(*reserved 25*)
+			CF_INST_WAIT_ACK 26;
+			CF_INST_TC_ACK 27;
+			CF_INST_VC_ACK 28;
+			CF_INST_JUMPTABLE 29;
+			CF_INST_GLOBAL_WAVE_SYNC 30;
+			CF_INST_HALT 31;
+		end enum;
+		
+		field POP_COUNT(2:0) INT;
+		field CF_CONST(7:3) INT;
+		field COND(9:8) COND;
+		field COUNT(15:10) INT;
+		field Reserved(19:16) INT;
+		field VALIX_PIXEL_MODE(20) BOOL;
+		field END_OF_PROGRAM(21) BOOL;
+		field CF_INST(29:22) CF_INST;
+		field WHOLE_QUAD_MODE(30) BOOL;
+		field BARRIER(31) BOOL;
+	end microcode;
+	
+	microcode CF_ALU_WORD0(32):
+		enum(2) CACHE_MODE:
+			CF_KCACHE_NOP;
+			CF_KCACHE_LOCK_1;
+			CF_KCACHE_LOCK_2;
+			CF_KCACHE_LOCK_LOOP_INDEX;
+		end enum;
+		
+		field ADDR(21:0) INT;
+		field KCACHE_BANK0(25:22) INT;
+		field KCACHE_BANK1(29:26) INT;
+		field KCACHE_MODE0(31:30) CACHE_MODE;
+	end microcode;
+	
+	microcode CF_ALU_WORD1(32):
+		enum(2) CACHE_MODE:
+			CF_KCACHE_NOP;
+			CF_KCACHE_LOCK_1;
+			CF_KCACHE_LOCK_2;
+			CF_KCACHE_LOCK_LOOP_INDEX;
+		end enum;
+		
+		enum(4) CF_INST:
+			CF_INST_ALU 8;
+			CF_INST_ALU_PUSH_BEFORE 9;
+			CF_INST_ALU_POP_AFTER 10;
+			CF_INST_ALU_POP2_AFTER 11;
+			CF_INST_ALU_EXTENDED 12;
+			CF_INST_ALU_CONTINUE 13;
+			CF_INST_ALU_BREAK 14;
+			CF_INST_ALU_ELSE_AFTER 15;
+		end enum;
+		
+		field KCACHE_MODE1(1:0) CACHE_MODE;
+		field KCACHE_ADDR0(9:2) INT;
+		field KCACHE_ADDR1(17:10) INT;
+		field COUNT(24:18) INT;
+		field ALT_CONST(25) BOOL;
+		field CF_INST(29:26) CF_INST;
+		field WHOLE_QUAD_MODE(30) BOOL;
+		field BARRIER(31) BOOL;
+	end microcode;
+	
+	
+	microcode CF_ALLOC_EXPORT_WORD0_RAT(32):
+		enum(6) RAT_INST:
+			EXPORT_RAT_INST_NOP 0;
+			EXPORT_RAT_INST_STORE_TYPED 1;
+			EXPORT_RAT_INST_STORE_RAW 2;
+			EXPORT_RAT_INST_STORE_RAW_FDENORM 3;
+			EXPORT_RAT_INST_CMPXCHG_INT 4;
+			EXPORT_RAT_INST_CMPXCHG_FLT 5;
+			EXPORT_RAT_INST_CMPXCHG_FDENORM 6;
+			EXPORT_RAT_INST_ADD 7;
+			EXPORT_RAT_INST_SUB 8;
+			EXPORT_RAT_INST_RSUB 9;
+			EXPORT_RAT_INST_MIN_INT 10;
+			EXPORT_RAT_INST_MIN_UINT 11;
+			EXPORT_RAT_INST_MAX_INT 12;
+			EXPORT_RAT_INST_MAX_UINT 13;
+			EXPORT_RAT_INST_AND 14;
+			EXPORT_RAT_INST_OR 15;
+			(*TODO...*)
+		end enum;
+		
+		enum(2) RAT_INDEX_MO:
+			CF_INDEX_NONE;
+			CF_INDEX_0;
+			CF_INDEX_1;
+			CF_INVALID;
+		end enum;
+		
+		
+		field RAT_ID(3:0) INT;
+		field RAT_INST(9:4) RAT_INST;
+		field RAT_INDEX_MO(12:11) RAT_INDEX_MO;
+		field TYPE(14:13) INT; /*should be enum but it's meaning depends on others*/
+		field RW_GPR(21:15) INT;
+		field RW_REL(22) BOOL;
+		field INDEX_GPR(29:23) INT;
+		field ELEM_SIZE(31:30) INT;
+	end microcode;
+	
+	microcode CF_ALLOC_EXPORT_WORD1_BUF(32):
+		enum(8) CF_INST:
+			CF_INST_MEM_WR_SCRATCH 80;
+			CF_INST_MEM_RAT 86;
+			CF_INST_MEM_RAT_CACHELESS 87;
+		end enum;
+	
+		field ARRAY_SIZE(11:0) INT;
+		field COMP_MASK(15:12) INT;
+		field BURST_COUNT(19:16) INT;
+		field VALID_PIXEL_MODE(20) BOOL;
+		field END_OF_PROGRAM(21) BOOL;
+		field CF_INST(29:22) CF_INST;
+		field MARK(30) BOOL;
+		field BARRIER(31) BOOL;
+	end microcode;
+
 	tuple MEM_RD_SCRATCH(128):
 		microcode MEM_RD_WORD0;
 		microcode MEM_RD_WORD1;
@@ -134,12 +303,50 @@ architecture R800 Evergreen;
 		end constraints;
 	end tuple;
 
-	tuple ADD_INT(64):
-		microcode ALU_WORD0;
-		microcode ALU_WORD1_OP2;
+#define ALU_INST_OP2_TEMPLATE(instr) \
+	tuple instr (64): \
+		microcode ALU_WORD0; \
+		microcode ALU_WORD1_OP2; \
+		constraints: \
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr; \
+		end constraints; \
+	end tuple
+	
+#define CF_INST_TEMPLATE(instr) \
+	tuple instr (64): \
+		microcode CF_WORD0; \
+		microcode CF_WORD1; \
+		constraints: \
+			CF_WORD1.CF_INST == CF_INST_ ## instr; \
+		end constraints; \
+	end tuple
+
+	ALU_INST_OP2_TEMPLATE(ADD_INT);
+	ALU_INST_OP2_TEMPLATE(LSHR_INT);
+	
+	tuple ALU(64):
+		microcode CF_ALU_WORD0;
+		microcode CF_ALU_WORD1;
+		constraints:
+			CF_ALU_WORD1.CF_INST == CF_INST_ALU;
+		end constraints;
+	end tuple;
+	
+	CF_INST_TEMPLATE(LOOP_START);
+	CF_INST_TEMPLATE(LOOP_START_DX10);
+	CF_INST_TEMPLATE(LOOP_START_NO_AL);
+	CF_INST_TEMPLATE(LOOP_END);
+	CF_INST_TEMPLATE(TC);
+	CF_INST_TEMPLATE(VC);
+	CF_INST_TEMPLATE(WAIT_ACK);
+	CF_INST_TEMPLATE(NOP);
+	
+	tuple MEM_RAT_CACHELESS(64):
+		microcode CF_ALLOC_EXPORT_WORD0_RAT;
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;
 		
 		constraints:
-			ALU_WORD1_OP2.ALU_INST == OP2_INST_ADD_INT;
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_RAT_CACHELESS;
 		end constraints;
 	end tuple;
 end;

@@ -250,6 +250,8 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 	
 	int match_num;
 	
+	filter_prefix = "CF_";
+	
 	set<int> literal_chan_read;
 	
 	do{
@@ -260,6 +262,11 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 		
 		for (auto i = asmdef.microcode_format_tuples.begin(); i != asmdef.microcode_format_tuples.end(); i++)
 		{
+			if (filter_prefix != i->second.tuple.front().substr(0, filter_prefix.size()))
+			{
+				continue;
+			}
+			
 			tuple_matches[i->first] = try_tuple_fit(data, i->second);
 			
 			if (tuple_matches[i->first])
@@ -325,6 +332,7 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 			data.erase(data.begin(), data.begin() + match_size);
 			result += "\n";
 		}
+		cout << result << endl;
 	} while (match_num);
 	
 	if (data.size() != 0)
@@ -332,6 +340,10 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 		cerr << result << endl;
 		cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
 		printf("0x%.8X\n", data[0]);
+		if (data.size() > 1)
+		{
+			printf("0x%.8X\n", data[1]);
+		}
 		throw runtime_error("Disassembling error");
 	}
 	

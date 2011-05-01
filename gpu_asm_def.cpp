@@ -383,11 +383,12 @@ std::string asm_definition::clear_comments(std::string text)
 	auto comment_p1 = confix("/*", "*/")[*(char_ - "*/")];
 	auto comment_p2 = confix("//", eol)[*(char_ - eol)];
 	auto comment_p3 = confix("(*", "*)")[*(char_ - "*)")];
+	auto comment_p4 = confix("#", eol)[*(char_ - eol)];
 
 	auto begin = text.begin();
 	auto end = text.end();
 	
-	phrase_parse(begin, end, *char_[push_back(ref_(result), _1)], comment_p1 | comment_p2 | comment_p3);
+	phrase_parse(begin, end, *char_[push_back(ref_(result), _1)], comment_p1 | comment_p2 | comment_p3 | comment_p4);
 	
 	return std::string(result.begin(), result.end());
 }
