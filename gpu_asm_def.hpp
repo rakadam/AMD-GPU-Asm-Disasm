@@ -74,6 +74,7 @@ struct microcode_format_tuple
 	int size_in_bits;
 	std::vector<std::string> tuple;
 	std::map<std::pair<std::string, std::string>, std::string> constraints; //KEY,VALUE pairs of field constraints in this format tuple
+	std::set<std::string> options;
 };
 
 struct asm_definition

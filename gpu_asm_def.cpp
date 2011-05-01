@@ -371,6 +371,22 @@ struct set_default_elem_a
 	}
 };
 
+struct push_option_a
+{
+	asm_definition* asmdef;
+	cur_attrib& attrib;
+	
+	push_option_a(asm_definition* asmdef, cur_attrib& attrib) 
+		: asmdef(asmdef), attrib(attrib)
+	{
+	}
+	
+	void operator()(std::vector<char>& chvec, qi::unused_type, qi::unused_type) const
+	{
+		asmdef->microcode_format_tuples.at(attrib.cur_tuple).options.insert(std::string(chvec.begin(), chvec.end()));
+	}
+};
+
 #define ref_ boost::phoenix::ref
 
 std::string asm_definition::clear_comments(std::string text)
@@ -409,6 +425,7 @@ std::string asm_definition::clear_comments(std::string text)
 #define new_tuple new_tuple_a(this, attr)
 #define push_micro push_micro_a(this, attr)
 #define set_default_elem set_default_elem_a(this, attr)
+#define push_option push_option_a(this, attr)
 
 asm_definition::asm_definition(std::string text)
 {
@@ -430,9 +447,10 @@ asm_definition::asm_definition(std::string text)
 	auto field = "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p  > lit(';')[new_field];
 	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
 	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
+	auto option = "option" > name[push_option] > lit(';');
 	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];
 	auto constraints_def = "constraints" >> lit(':') > *constraint_def > "end" > "constraints" > ';';
-	auto tuple_def = "tuple" > name_c(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > -constraints_def > "end" > "tuple" > ';';
+	auto tuple_def = "tuple" > name_c(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > *option > -constraints_def > "end" > "tuple" > ';';
 	
 	auto begin = text.begin();
 	auto end = text.end();

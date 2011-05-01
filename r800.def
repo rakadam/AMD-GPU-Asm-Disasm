@@ -291,6 +291,99 @@ architecture R800 Evergreen;
 		field BARRIER(31) BOOL;
 	end microcode;
 
+	microcode VTX_WORD0(32):
+		enum(5) VC_INST:
+			VC_INST_FETCH 0;
+			VC_INST_SEMANTIC 1;
+			VC_INST_GET_BUFFER_RESINFO 14;
+		end enum;
+		
+		enum(2) FETCH_TYPE:
+			VTX_FETCH_VERTEX_DATA 0;
+			VTX_FETCH_INSTANCE_DATA 1;
+			VTX_FETCH_NO_INDEX_OFFSET 2;
+		end enum;
+		
+		enum(2) CHAN_SEL:
+			SEL_X;
+			SEL_Y;
+			SEL_Z;
+			SEL_W;
+		end enum;
+		
+		field VC_INST(4:0) VC_INST;
+		field FETCH_TYPE(6:5) FETCH_TYPE;
+		field FETCH_WHOLE_QUAD(7) BOOL;
+		field BUFFER_ID(15:8) INT;
+		field SRC_GPR(22:16) INT;
+		field SRC_REL(23) BOOL;
+		field SRC_SEL_X(25:24) CHAN_SEL;
+		field MEGA_FETCH_COUNT(31:26) INT;
+	end microcode;
+	
+	microcode VTX_WORD1_GPR(32):
+		enum(3) CHAN_SEL:
+			SEL_X 0;
+			SEL_Y 1;
+			SEL_Z 2;
+			SEL_W 3;
+			SEL_0 4;
+			SEL_1 5;
+			SEL_MASK 7;
+		end enum;
+	
+		enum(2) NUM_FORMAT_ALL:
+			NUM_FORMAT_NORM 0;
+			NUM_FORMAT_INT 1;
+			NUM_FORMAT_SCALED 2;
+		end enum;
+		
+		enum(1) FORMAT_COMP_ALL:
+			FORMAT_COMP_UNSIGNED 0 default;
+			FORMAT_COMP_SIGNED 1;
+		end enum;
+		
+		enum(1) SRF_MODE_ALL:
+			SRF_MODE_ZERO_CLAMP_MINUS_ONE 0 default;
+			SRF_MODE_NO_ZERO 1;
+		end enum;
+		
+		field DST_GRP(6:0) INT;
+		field DST_REL(7) BOOL;
+		field DST_SEL_X(11:9) CHAN_SEL;
+		field DST_SEL_Y(14:12) CHAN_SEL;
+		field DST_SEL_Z(17:15) CHAN_SEL;
+		field DST_SEL_W(20:18) CHAN_SEL;
+		field USE_CONST_FIELDS(21) BOOL;
+		field DATA_FORMAT(27:22) INT; //not defined in the documentation!!
+		field NUM_FORMAT_ALL(29:28) NUM_FORMAT_ALL;
+		field FORMAT_COMP_ALL(30) FORMAT_COMP_ALL;
+		field SRF_MODE_ALL(31) SRF_MODE_ALL;
+	end microcode;
+
+	
+	microcode VTX_WORD2(32)
+		enum(2) ENDIAN_SWAP:
+			ENDIAN_NONE 0 default;
+			ENDIAN_8IN16 1;
+			ENDIAN_8IN32 2;
+		end enum;
+		
+		enum(2) BUFFER_INDEX_MODE:
+			CF_INDEX_NONE 0 default;
+			CF_INDEX_0 1;
+			CF_INDEX_1 2;
+			CF_INVALID 3;
+		end enum;
+		
+		field OFFSET(15:0) INT;
+		field ENDIAN_SWAP(17:16) ENDIAN_SWAP;
+		field CONST_BUF_NO_STRIDE(18) BOOL;
+		field MEGA_FETCH(19) BOOL;
+		field ALT_CONST(20) BOOL;
+		field BUFFER_INDEX_MODE(22:21) BUFFER_INDEX_MODE;
+	end microcode;
+
 	tuple MEM_RD_SCRATCH(128):
 		microcode MEM_RD_WORD0;
 		microcode MEM_RD_WORD1;
@@ -321,25 +414,48 @@ architecture R800 Evergreen;
 		end constraints; \
 	end tuple
 
+#define CF_INST_TEMPLATE_OPT(instr, opt) \
+	tuple instr (64): \
+		microcode CF_WORD0; \
+		microcode CF_WORD1; \
+		option opt ; \
+		constraints: \
+			CF_WORD1.CF_INST == CF_INST_ ## instr; \
+		end constraints; \
+	end tuple
+
 	ALU_INST_OP2_TEMPLATE(ADD_INT);
 	ALU_INST_OP2_TEMPLATE(LSHR_INT);
 	
-	tuple ALU(64):
-		microcode CF_ALU_WORD0;
-		microcode CF_ALU_WORD1;
+#define CF_ALU_INST_TEMPLATE(instr) \
+	tuple instr (64): \
+		microcode CF_ALU_WORD0; \
+		microcode CF_ALU_WORD1; \
+		option ADDR_IS_ALU; \
+		constraints: \
+			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr ; \
+		end constraints; \
+	end tuple
+	
+	CF_ALU_INST_TEMPLATE(ALU);
+	
+	CF_INST_TEMPLATE_OPT(LOOP_START, ADDR_IS_CF);
+	CF_INST_TEMPLATE_OPT(LOOP_START_DX10, ADDR_IS_CF);
+	CF_INST_TEMPLATE_OPT(LOOP_START_NO_AL, ADDR_IS_CF);
+	CF_INST_TEMPLATE_OPT(LOOP_END, ADDR_IS_CF);
+	CF_INST_TEMPLATE_OPT(TC, ADDR_IS_TEX);
+	CF_INST_TEMPLATE_OPT(VC, ADDR_IS_VTX);
+	CF_INST_TEMPLATE_OPT(WAIT_ACK, ADDR_MEANS_COUNT);
+	
+	tuple NOP(64):
+		microcode CF_WORD0;
+		microcode CF_WORD1;
+		option JUMPTABLE_SE_MEANS_NOTHING;
+		option COND_MEANS_NOTHING;
 		constraints:
-			CF_ALU_WORD1.CF_INST == CF_INST_ALU;
+			CF_WORD1.CF_INST == CF_INST_NOP;
 		end constraints;
 	end tuple;
-	
-	CF_INST_TEMPLATE(LOOP_START);
-	CF_INST_TEMPLATE(LOOP_START_DX10);
-	CF_INST_TEMPLATE(LOOP_START_NO_AL);
-	CF_INST_TEMPLATE(LOOP_END);
-	CF_INST_TEMPLATE(TC);
-	CF_INST_TEMPLATE(VC);
-	CF_INST_TEMPLATE(WAIT_ACK);
-	CF_INST_TEMPLATE(NOP);
 	
 	tuple MEM_RAT_CACHELESS(64):
 		microcode CF_ALLOC_EXPORT_WORD0_RAT;
@@ -347,6 +463,17 @@ architecture R800 Evergreen;
 		
 		constraints:
 			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_RAT_CACHELESS;
+		end constraints;
+	end tuple;
+	
+	tuple (128):
+		microcode VTX_WORD0;
+		microcode VTX_WORD1_GPR;
+		microcode VTX_WORD2;
+		microcode padding_32;
+		
+		constraints:
+			VTX_WORD0.VC_INST == VC_INST_FETCH;
 		end constraints;
 	end tuple;
 end;

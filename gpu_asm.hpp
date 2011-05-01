@@ -23,6 +23,7 @@ public:
 class gpu_disassembler
 {
 	gpu_asm::asm_definition asmdef;
+	std::map<long, int> label_table;
 	
 	struct tclause
 	{
@@ -35,7 +36,7 @@ public:
 	
 	gpu_disassembler(const gpu_asm::asm_definition& asmdef);
 	std::string disassemble(std::vector<uint32_t> data);
-	std::string disassemble_cf(std::vector<uint32_t> data, std::vector<tclause>& clauses);
+	std::string disassemble_cf(std::vector<uint32_t> data);
 	std::string disassemble_clause(std::vector<uint32_t> data, tclause);
 	
 	gpu_asm::field get_field(std::string format_name, std::string field_name);
@@ -44,7 +45,7 @@ public:
 	int try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_tuple(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_microcode(uint32_t code, const gpu_asm::microcode_format& format, const gpu_asm::microcode_format_tuple& tuple);
-	std::string parse_field(uint32_t code, gpu_asm::field);
+	std::string parse_field(uint32_t code, gpu_asm::field, gpu_asm::microcode_format_tuple);
 	
 	long check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value = ""); //field_value == "": returns the numeric val of the field, otherwise returns a boolean
 	

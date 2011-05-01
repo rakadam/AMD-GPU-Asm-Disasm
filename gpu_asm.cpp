@@ -250,7 +250,7 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 	
 	int match_num;
 	
-	filter_prefix = "CF_";
+// 	filter_prefix = "CF_";
 	
 	set<int> literal_chan_read;
 	
@@ -349,6 +349,16 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 	
 	
 	return result;
+}
+
+std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
+{
+	
+}
+
+std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tclause claue)
+{
+	
 }
 
 gpu_asm::field gpu_disassembler::get_field(std::string format_name, std::string field_name)
@@ -475,7 +485,12 @@ std::string gpu_disassembler::parse_tuple(const std::vector<uint32_t>& data, con
 		}
 		else
 		{
-			result += "\t" + parse_microcode(data[i], m_format, tuple) + ";\n";
+			string parsed_micro = parse_microcode(data[i], m_format, tuple);
+			
+			if (parsed_micro != "")
+			{
+				result += "\t" + parsed_micro + ";\n";
+			}
 		}
 	}
 	
@@ -496,7 +511,7 @@ std::string gpu_disassembler::parse_microcode(uint32_t code, const gpu_asm::micr
 			}
 		}
 		
-		string str_field = parse_field(code, format.fields[i]);
+		string str_field = parse_field(code, format.fields[i], tuple);
 		
 		if (result != "" and str_field != "")
 			result += " ";
@@ -504,16 +519,47 @@ std::string gpu_disassembler::parse_microcode(uint32_t code, const gpu_asm::micr
 		result += str_field;
 	}
 	
-	if (result != "")
+/*	if (result != "")
 	{
 		result = format.name + "> " + result;
-	}
+	}*/
 	
 	return result;
 }
 
-std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field)
+std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, gpu_asm::microcode_format_tuple tuple)
 {
+	string fname = field.name;
+	bool code_addr = false;
+	string code_addr_type = "";
+	
+	string s_name = fname + "_MEANS_";
+	string code_addr_prefix = fname + "_IS_";
+	
+	for (auto i = tuple.options.begin(); i != tuple.options.end(); i++)
+	{
+		if (i->substr(0, s_name.size()) == s_name)
+		{
+			fname = i->substr(s_name.size(), i->size());
+// 			break;
+		}
+		
+		if (i->substr(0, code_addr_prefix.size()) == code_addr_prefix)
+		{
+			code_addr_type = i->substr(code_addr_prefix.size(), i->size());
+			code_addr = true;
+// 			break;
+		}
+	}
+	
+	if (fname == "NOTHING")
+		return "";
+	
+	if (code_addr and !field.numeric)
+	{
+		throw runtime_error("Only numeric fields are allowed to contain an address: " + field.name + " tuple: " + tuple.name);
+	}
+	
 	if (field.numeric)
 	{
 		long value = get_field_value(code, field.bits);
@@ -530,9 +576,17 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field)
 		
 		stringstream ss;
 		
-		if (value)
+		if (code_addr)
 		{
-			ss << field.name << "(" << value << ")";
+			if (label_table.count(value) == 0)
+			{
+				label_table[value] = label_table.size();
+			}
+			
+			ss << fname << "(@" << label_table.at(value) << ")"; 
+		} else if (value)
+		{
+			ss << fname << "(" << value << ")";
 		}
 		
 		return ss.str();
@@ -544,7 +598,7 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field)
 		
 		if (value)
 		{
-			return field.name;
+			return fname;
 		}
 		
 		return "";
@@ -567,7 +621,7 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field)
 		
 		if (enum_eval != "")
 		{
-			return field.name + "." + enum_eval;
+			return fname + "." + enum_eval;
 		}
 		
 		return "";

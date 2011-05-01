@@ -39,7 +39,7 @@ int main()
 	
 	uint32_t val;
 	
-	fseek(f4, 0x0, SEEK_SET);
+	fseek(f4, 0x180, SEEK_SET);
 	
 	while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
 	{
