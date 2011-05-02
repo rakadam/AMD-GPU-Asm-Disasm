@@ -24,12 +24,16 @@ class gpu_disassembler
 {
 	gpu_asm::asm_definition asmdef;
 	std::map<long, int> label_table;
+	int indent;
 	
 	struct tclause
 	{
 		int addr; // in dword from PGM_START_*
 		std::string prefix; //like: TEX_ ALU_ VTX_
+		int len; // length
 	};
+	
+	std::vector<tclause> clause_todo;
 	
 public:
 	std::string filter_prefix; //filter by CF_ ALU_ TEX_
@@ -50,6 +54,8 @@ public:
 	long check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value = ""); //field_value == "": returns the numeric val of the field, otherwise returns a boolean
 	
 	std::string parse_literals(const std::vector<uint32_t>& data, int offset, int size);
+	
+	std::string gen_indent(int offset);
 };
 
 namespace gpu_asm

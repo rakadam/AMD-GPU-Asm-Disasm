@@ -239,18 +239,28 @@ gpu_asm::field gpu_assembler::get_field_def(gpu_asm::instruction instr, gpu_asm:
 
 
 gpu_disassembler::gpu_disassembler(const gpu_asm::asm_definition& asmdef)
-	: asmdef(asmdef)
+	: asmdef(asmdef), indent(0)
 {
 }
 
 std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 {
+	disassemble_cf(data); //prepare labels!
+	
+	cout << endl << endl << endl;
+	
+	return disassemble_cf(data);
+}
+
+std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
+{
+	vector<uint32_t> orig_data = data;
 	std::string result;
 	int orig_size = data.size();
 	
 	int match_num;
 	
-// 	filter_prefix = "CF_";
+	filter_prefix = "CF_";
 	
 	set<int> literal_chan_read;
 	
@@ -292,9 +302,168 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 		
 		if (match_num == 1)
 		{
-// 			cout << parse_tuple(data, match_tuple) << endl;
 			result += parse_tuple(data, match_tuple);
 		
+			result += "\n";
+			
+			if (match_tuple.tuple[0] == "CF_WORD0")
+			if (check_field(data, match_tuple, "END_OF_PROGRAM"))
+			{
+				break;
+			}
+			
+			data.erase(data.begin(), data.begin() + match_size);
+		}
+		
+// 		cout << result << endl;
+		
+		if (clause_todo.size())
+		{
+			indent = 1;
+			result += disassemble_clause(orig_data, clause_todo.front());
+			indent = 0;
+			clause_todo.clear();
+		}
+		
+		int index = (orig_data.size() - data.size());
+		
+		if (label_table.count(index/2))
+		{
+			stringstream ss;
+			
+			ss << "@" << label_table[index/2] << endl;
+			result += ss.str();
+		}
+		
+/*		{
+			stringstream ss;
+			ss << "//" << index/2 << endl;
+			result += ss.str();
+		}*/
+		
+		if (data.size() == 0)
+		{
+			cout << "zero size reached" << endl;
+			return result;
+		}
+		
+		if (match_num == 0)
+		{
+			cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
+			printf("0x%.8X\n", data[0]);
+			
+			if (data.size() > 1)
+			{
+				printf("0x%.8X\n", data[1]);
+			}
+			
+			throw runtime_error("Disassembling error");
+		}
+		
+	} while (match_num);
+	
+// 	if (data.size() != 0)
+// 	{
+// 		cerr << result << endl;
+// 		cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
+// 		printf("0x%.8X\n", data[0]);
+// 		if (data.size() > 1)
+// 		{
+// 			printf("0x%.8X\n", data[1]);
+// 		}
+// 		throw runtime_error("Disassembling error");
+// 	}
+	
+	return result;
+}
+
+std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tclause clause)
+{
+	std::string result;
+	int orig_size = data.size();
+	
+	int match_num;
+	
+	clause.len++;
+	
+	filter_prefix = clause.prefix + "_";
+	
+	set<int> literal_chan_read;
+	
+	cout << data.size() << " " << clause.addr << " " << clause.len << " " << clause.prefix << endl;
+	
+	data.erase(data.begin(), data.begin()+clause.addr*2);
+	
+	printf("%.8x\n", data.front());
+	
+	string filter_prefix2 = filter_prefix;
+	
+	if (filter_prefix == "TEX_") //WTF?
+	{
+		filter_prefix2 = "VTX_";
+	}
+	
+	if (filter_prefix == "VTX_")
+	{
+		filter_prefix2 = "TEX_";
+	}
+	
+	cout << filter_prefix2 << endl;
+	
+	cout << clause.addr*2 << " ";
+	
+	for (auto i = label_table.begin(); i != label_table.end(); i++)
+	{
+		cout << i->first << " ";
+	}
+	
+	cout << endl;
+	
+	
+	for (int icount = 0; icount < clause.len; icount++)
+	{
+		map<string, int> tuple_matches;
+		match_num = 0;
+		int match_size = 0;
+		gpu_asm::microcode_format_tuple match_tuple;
+		
+		for (auto i = asmdef.microcode_format_tuples.begin(); i != asmdef.microcode_format_tuples.end(); i++)
+		{
+			if (filter_prefix != i->second.tuple.front().substr(0, filter_prefix.size()) and 
+				filter_prefix2 != i->second.tuple.front().substr(0, filter_prefix2.size()))
+			{
+				continue;
+			}
+			
+			tuple_matches[i->first] = try_tuple_fit(data, i->second);
+			
+			if (tuple_matches[i->first])
+			{
+				match_num++;
+				match_size = tuple_matches[i->first] / 32;
+				match_tuple = i->second;
+			}
+		}
+	
+		if (match_num > 1)
+		{
+			cerr << "Ambiguous matches at " << orig_size - data.size() << endl;
+			
+			for (auto i = tuple_matches.begin(); i != tuple_matches.end(); i++)
+			{
+				if (i->second)
+					cerr << i->first << endl;
+			}
+			
+			throw runtime_error("Ambiguous matches");
+		}
+		
+		if (match_num == 1)
+		{
+			string p_str = parse_tuple(data, match_tuple);
+			
+			result += p_str;
+			
 			if (match_tuple.tuple[0] == "ALU_WORD0")
 			{
 				if (check_field(data, match_tuple, "SRC0_SEL", "ALU_SRC_LITERAL"))
@@ -321,6 +490,8 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 						lit_size = 4;
 					}
 					
+					icount += lit_size/2;
+					
 					result += parse_literals(data, match_size, lit_size);
 					
 					literal_chan_read.clear();
@@ -329,13 +500,36 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 				}
 			}
 			
+			
 			data.erase(data.begin(), data.begin() + match_size);
 			result += "\n";
+			
+// 			if (match_tuple.tuple[0] == "ALU_WORD0")
+// 			if (check_field(data, match_tuple, "LAST"))
+// 			{
+// 				cout << p_str << endl;
+// 				cout << "LAST found" << endl;
+// 				break;
+// 			}
 		}
-		cout << result << endl;
-	} while (match_num);
+		
+		if (match_num == 0)
+		{
+			cerr << "Undefine instruction: " << endl;
+			
+			printf("%.8X\n", data[0]);
+			if (data.size() > 1)
+			{
+				printf("%.8X\n", data[1]);
+			}
+			throw runtime_error("Disassembling error");
+		}
+		
+// 		cout << result << endl;
+		
+	}
 	
-	if (data.size() != 0)
+/*	if (data.size() != 0)
 	{
 		cerr << result << endl;
 		cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
@@ -345,20 +539,10 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 			printf("0x%.8X\n", data[1]);
 		}
 		throw runtime_error("Disassembling error");
-	}
+	}*/
 	
-	
+	filter_prefix = "CF_";
 	return result;
-}
-
-std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
-{
-	
-}
-
-std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tclause claue)
-{
-	
 }
 
 gpu_asm::field gpu_disassembler::get_field(std::string format_name, std::string field_name)
@@ -473,7 +657,7 @@ std::string gpu_disassembler::parse_tuple(const std::vector<uint32_t>& data, con
 {
 	std::string result;
 	
-	result = tuple.name + ":\n";
+	result = gen_indent(0) + tuple.name + ":\n";
 	
 	for (int i = 0; i < int(tuple.tuple.size()); i++)
 	{
@@ -489,7 +673,7 @@ std::string gpu_disassembler::parse_tuple(const std::vector<uint32_t>& data, con
 			
 			if (parsed_micro != "")
 			{
-				result += "\t" + parsed_micro + ";\n";
+				result += gen_indent(1) + parsed_micro + ";\n";
 			}
 		}
 	}
@@ -578,6 +762,19 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 		
 		if (code_addr)
 		{
+			
+			tclause clause;
+			clause.addr = value;
+			clause.prefix = code_addr_type;
+			clause.len = -1; //should be filled later if applicable
+			
+// 			cout << code_addr_type << " " << ss.str() << endl;
+			if (code_addr_type != "CF")
+			{
+				clause_todo.push_back(clause);
+				return "";
+			}
+			
 			if (label_table.count(value) == 0)
 			{
 				label_table[value] = label_table.size();
@@ -587,6 +784,11 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 		} else if (value)
 		{
 			ss << fname << "(" << value << ")";
+		}
+		
+		if (fname == "COUNT" and clause_todo.size())
+		{
+			clause_todo.back().len = value;
 		}
 		
 		return ss.str();
@@ -705,8 +907,20 @@ std::string gpu_disassembler::parse_literals(const std::vector<uint32_t>& data, 
 	
 	for (int i = offset; i < offset+size; i++)
 	{
-		pos += sprintf(buf+pos, "\tLITERAL> 0x%.8X;\n", data[i]);
+		pos += sprintf(buf+pos, "%s0x%.8X;\n", gen_indent(1).c_str(), data[i]);
 	}
 	
 	return buf;
+}
+
+std::string gpu_disassembler::gen_indent(int offset)
+{
+	std::string s;
+	
+	for (int i = 0; i < indent+offset; i++)
+	{
+		s += "\t";
+	}
+	
+	return s;
 }

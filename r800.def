@@ -59,6 +59,7 @@ architecture R800 Evergreen;
 		enum(11) ALU_INST:
 			OP2_INST_LSHR_INT 22;
 			OP2_INST_ADD_INT 52;
+			OP2_INST_GROUP_BARRIER 84;
 		end enum;
 		
 		enum(2) CHAN_SEL:
@@ -193,10 +194,10 @@ architecture R800 Evergreen;
 	
 	microcode CF_ALU_WORD0(32):
 		enum(2) CACHE_MODE:
-			CF_KCACHE_NOP;
-			CF_KCACHE_LOCK_1;
-			CF_KCACHE_LOCK_2;
-			CF_KCACHE_LOCK_LOOP_INDEX;
+			CF_KCACHE_NOP 0 default;
+			CF_KCACHE_LOCK_1 1;
+			CF_KCACHE_LOCK_2 2;
+			CF_KCACHE_LOCK_LOOP_INDEX 3;
 		end enum;
 		
 		field ADDR(21:0) INT;
@@ -207,10 +208,10 @@ architecture R800 Evergreen;
 	
 	microcode CF_ALU_WORD1(32):
 		enum(2) CACHE_MODE:
-			CF_KCACHE_NOP;
-			CF_KCACHE_LOCK_1;
-			CF_KCACHE_LOCK_2;
-			CF_KCACHE_LOCK_LOOP_INDEX;
+			CF_KCACHE_NOP 0 default;
+			CF_KCACHE_LOCK_1 1;
+			CF_KCACHE_LOCK_2 2;
+			CF_KCACHE_LOCK_LOOP_INDEX 3;
 		end enum;
 		
 		enum(4) CF_INST:
@@ -362,7 +363,7 @@ architecture R800 Evergreen;
 	end microcode;
 
 	
-	microcode VTX_WORD2(32)
+	microcode VTX_WORD2(32):
 		enum(2) ENDIAN_SWAP:
 			ENDIAN_NONE 0 default;
 			ENDIAN_8IN16 1;
@@ -426,6 +427,7 @@ architecture R800 Evergreen;
 
 	ALU_INST_OP2_TEMPLATE(ADD_INT);
 	ALU_INST_OP2_TEMPLATE(LSHR_INT);
+	ALU_INST_OP2_TEMPLATE(GROUP_BARRIER);
 	
 #define CF_ALU_INST_TEMPLATE(instr) \
 	tuple instr (64): \
@@ -466,7 +468,7 @@ architecture R800 Evergreen;
 		end constraints;
 	end tuple;
 	
-	tuple (128):
+	tuple FETCH(128):
 		microcode VTX_WORD0;
 		microcode VTX_WORD1_GPR;
 		microcode VTX_WORD2;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include "gpu_asm.hpp"
 
 using namespace std;
@@ -7,6 +8,7 @@ using namespace std;
 
 int main()
 {
+	system("cpp r800.def > r800.def.ii");
 	ifstream f("r800.def.ii");
 	
 	string text = std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
@@ -39,7 +41,7 @@ int main()
 	
 	uint32_t val;
 	
-	fseek(f4, 0x180, SEEK_SET);
+	fseek(f4, 0x0, SEEK_SET);
 	
 	while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
 	{
@@ -53,8 +55,8 @@ int main()
 	
 	gpu_disassembler dis(asmdef);
 	
-	cout << dis.disassemble(code) << endl;
-	
+	cout << "disassemble: " << endl << dis.disassemble(code) << endl;
+/*	
 	ifstream f2("test.asm");
 	
 	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
@@ -68,5 +70,5 @@ int main()
 	
 	fwrite(&codes[0], 1, sizeof(uint32_t)*codes.size(), f3);
 	
-	fclose(f3);
+	fclose(f3);*/
 }
