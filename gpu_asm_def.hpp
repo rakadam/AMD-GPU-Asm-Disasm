@@ -103,19 +103,13 @@ struct microcode_field
 	bool offset_is_set;
 	long offset; //for INT it is the actual value, for enum it is offset, nothing for BOOL
 	std::string enum_elem; //empty for BOOL and INT
-};
-
-struct microcode
-{
-	std::string name;
-	std::vector<microcode_field> fields;
+	std::string label; //if it uses a label
 };
 
 struct instruction
 {
 	std::string name;
-	
-	std::vector<microcode> microcodes;
+	std::string label; //if it has a label
 	std::vector<microcode_field> fields;
 };
 

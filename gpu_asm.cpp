@@ -20,6 +20,20 @@ std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 	std::vector<uint32_t> data;
 	parsed_instructions = parse_asm_text(text);
 	
+	//split parsed instructions into data and control flow
+	
+	//dummy generate control flow to get address of labels
+	
+	//generate data flow clauses, separately attributed to specific control flow instructions
+	
+	//allocate data flow clauses after the control flow
+	
+	//fill ADDR and COUNT fields of the control flow in the parsed format, to refer to the clauses
+	
+	//generate final control flow code
+	
+	//copy clauses into their final place
+	
 	
 	for (int i = 0; i < int(parsed_instructions.size()); i++)
 	{
@@ -789,6 +803,7 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 		if (fname == "COUNT" and clause_todo.size())
 		{
 			clause_todo.back().len = value;
+			return "";
 		}
 		
 		return ss.str();

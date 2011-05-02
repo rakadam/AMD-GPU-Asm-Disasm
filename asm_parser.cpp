@@ -85,12 +85,26 @@ static void print_info(boost::spirit::info const& what, bool detailed = false)
     boost::apply_visitor(walker, what.value);
 }
 
+struct assign_str
+{
+	std::string& str;
+	
+	assign_str(std::string& s) : str(s)
+	{
+	}
+	
+	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
+	{
+		str = std::string(s.begin(), s.end());
+	}
+};
 
 struct new_instruction
 {
 	vector<gpu_asm::instruction>& istream;
-
-	new_instruction(vector<gpu_asm::instruction>& istream) : istream(istream)
+	string& label;
+	
+	new_instruction(vector<gpu_asm::instruction>& istream, string& label) : istream(istream) , label(label)
 	{
 	}
 	
@@ -100,26 +114,28 @@ struct new_instruction
 // 		cout << name << endl;
 		istream.push_back(gpu_asm::instruction());
 		istream.back().name = name;
+		istream.back().label = label;
+		label = "";
 	}
 };
 
-struct new_microcode
-{
-	vector<gpu_asm::instruction>& istream;
-
-	new_microcode(vector<gpu_asm::instruction>& istream) : istream(istream)
-	{
-	}
-	
-	void operator()(const boost::optional<vector<char>>& s_, qi::unused_type, qi::unused_type) const
-	{
-		auto s = s_.get_value_or(vector<char>(0));
-		string name(s.begin(), s.end());
-// 		cout << name << endl;
-		istream.back().microcodes.push_back(gpu_asm::microcode());
-		istream.back().microcodes.back().name = name;
-	}
-};
+// struct new_microcode
+// {
+// 	vector<gpu_asm::instruction>& istream;
+// 
+// 	new_microcode(vector<gpu_asm::instruction>& istream) : istream(istream)
+// 	{
+// 	}
+// 	
+// 	void operator()(const boost::optional<vector<char>>& s_, qi::unused_type, qi::unused_type) const
+// 	{
+// 		auto s = s_.get_value_or(vector<char>(0));
+// 		string name(s.begin(), s.end());
+// // 		cout << name << endl;
+// 		istream.back().microcodes.push_back(gpu_asm::microcode());
+// 		istream.back().microcodes.back().name = name;
+// 	}
+// };
 
 struct new_field
 {
@@ -132,10 +148,6 @@ struct new_field
 	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
 	{
 		string name(s.begin(), s.end());
-		
-// 		cout << name << endl;
-		istream.back().microcodes.back().fields.push_back(gpu_asm::microcode_field());
-		istream.back().microcodes.back().fields.back().name = name;
 		
 		istream.back().fields.push_back(gpu_asm::microcode_field());
 		istream.back().fields.back().name = name;
@@ -154,8 +166,23 @@ struct set_enum
 	{
 		string name(s.begin(), s.end());
 // 		cout << name << endl;
-		istream.back().microcodes.back().fields.back().enum_elem = name;
 		istream.back().fields.back().enum_elem = name;
+	}
+};
+
+struct set_field_label
+{
+	vector<gpu_asm::instruction>& istream;
+
+	set_field_label(vector<gpu_asm::instruction>& istream) : istream(istream)
+	{
+	}
+	
+	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
+	{
+		string name(s.begin(), s.end());
+// 		cout << name << endl;
+		istream.back().fields.back().label = name;
 	}
 };
 
@@ -170,18 +197,16 @@ struct set_num
 	void operator()(int i, qi::unused_type, qi::unused_type) const
 	{
 // 		cout << i << endl;
-		istream.back().microcodes.back().fields.back().offset = i;
-		istream.back().microcodes.back().fields.back().offset_is_set = true;
 		istream.back().fields.back().offset = i;
 		istream.back().fields.back().offset_is_set = true;
 	}
 };
 
 
-#define new_instruction new_instruction(istream)
-#define new_microcode new_microcode(istream)
+#define new_instruction new_instruction(istream, future_label)
 #define new_field new_field(istream)
 #define set_enum set_enum(istream)
+#define set_field_label set_field_label(istream)
 #define set_num set_num(istream)
 
 std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
@@ -196,43 +221,95 @@ std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
 	using boost::spirit::qi::expectation_failure;
 	
 	vector<gpu_asm::instruction> istream;
+	string future_label;
 	
 	text = clear_comments(text);
 	
 	auto name = lexeme[+(alnum | char_('_'))];
-	auto num = '(' > int_ > ')';
-	auto field = name[new_field] > -('.' > name[set_enum]) > -(num[set_num]);
-	auto microcode = (-name >> '>')[new_microcode] > *field > ';';
-	auto instruction = (name >> ':')[new_instruction] > *microcode;
+	auto num = '(' > (int_[set_num] | (lit('@') > name[set_field_label])) > ')';
+	auto field = name[new_field] > -('.' > name[set_enum]) > -(num);
+	auto microcode = !(name >> ':') >> !lit('@') >> !(lit("end") > ";") >> *field > ';';
+	auto instruction = -(lit('@') > name[assign_str(future_label)]) >> !(lit("end") > ";") >> (name >> ':')[new_instruction] > *microcode;
 	
 	auto begin = text.begin();
 	auto end = text.end();
+	
+	int linenum = 0;
+	
+	for (int i = 0; i < int(text.length()); i++)
+		if (text[i] == '\n')
+			linenum++;
 	
 	try{
 		phrase_parse(begin, end, eps > *instruction > "end" > ";", space);
 	} catch (expectation_failure<decltype(begin)> const& x)
 	{
-		cout << "expected: "; print_info(x.what_);
-		string got(x.first, x.last);
-		cout << "got: " << got << endl;
+		std::cout << "expected: "; print_info(x.what_);
+		std::string got(x.first, x.last);
+		
+		int gotlinenum = 0;
+		
+		for (int i = 0; i < int(got.length()); i++)
+			if (got[i] == '\n')
+				gotlinenum++;
+
+		int gotsize = got.size();
+		
+		if (got.find("\n") != std::string::npos)
+		{
+			got.resize(got.find("\n"));
+		}
+		
+		std::cout << "got: \"" << got << "\" at line: #" << linenum - gotlinenum +1 << std::endl;
+		
+		int pos = 0;
+		int cpos = int(text.length()) - gotsize;
+		
+		for (int i = int(text.length()) - gotsize; i >= 0; i--)
+		{
+			if (text[i] == '\n')
+			{
+				pos = i+1;
+				break;
+			}
+		}
+		
+		int pos2 = text.length();
+		
+		for (int i = pos; i < int(text.length()); i++)
+		{
+			if (text[i] == '\n')
+			{
+				pos2 = i;
+				break;
+			}
+		}
+		
+		std::string line(text.begin()+pos, text.begin()+pos2);
+		
+		for (int i = 0; i < int(line.length()); i++)
+		{
+			if (line[i] == '\t')
+			{
+				line[i] = ' ';
+			} 
+		}
+		
+		std::cout << line << endl;
+		
+		for (int i = 0; i < cpos-pos; i++)
+		{
+			cout << " ";
+		}
+		
+		cout << "^" << endl;
+		
+		throw std::runtime_error("Syntax error");
 	}
 	
 	return istream;
 }
 
-struct assign_str
-{
-	std::string& str;
-	
-	assign_str(std::string& s) : str(s)
-	{
-	}
-	
-	void operator()(const vector<char>& s, qi::unused_type, qi::unused_type) const
-	{
-		str = std::string(s.begin(), s.end());
-	}
-};
 
 void parse_field_value(std::string text, long offset, std::string& name)
 {

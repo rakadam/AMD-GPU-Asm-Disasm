@@ -1,0 +1,56 @@
+
+inconsistency through the whole pdf:
+	"WORD" is used instead of DWORD, which is okay if you define 32 as a WORD, but sometimes the more traditional DWORD is mixed in too.
+	like on page 2-10, on table 2.7, DWORD is used.
+	and later in table 2.8 DWORD is used.
+	and in chapter 3.
+	But later chapter seems to favour using WORD, like CF_WORD and ALU_WORD instead of DWORD, like in chapter 6.
+
+
+page: 9-37 (embarassing typo)
+	"CNDNE_64
+	Compares the src0 with floating-point ero"
+	should be zero
+
+	page: 9-243 (wrong pseudo code)
+	"SQRT_IEEE
+	Scalar square root. Useful for normal compression.
+	If (src0 == 1.0f) {
+	dst = 1.0f;
+	}
+	Else {
+	dst = ApproximateRecipSqrt(srcC);
+	}"
+	should be ApproximateSqrt(srcC)
+
+page: 9-35 (order of the dwords are mixed up)
+	MEM_RAT_CACHELESS
+	order in the pdf:
+	"CF_ALLOC_EXPORT_WORD1_BUF CF_ALLOC_EXPORT_WORD0_RAT"
+	but both the numbering and the binary images generated from OpenCL imply reverse order.
+	The ordering is consistently wrong on the figure depicting binary structure of the words too. 
+
+	I haven't tested it, but it might be the case with page: 9-34 (MEM_RAT), page 9-36 (MEM_RAT_COMBINED_CACHELESS)
+
+page: 9-131 (opcode is wrong)
+	"LSHR_INT
+	ALU_INST == OP2_INST_LSHR_INT, opcode 113 (0x71)"
+	but according to page 10-28 (ALU_WORD1_OP2) the opcode 113 is reserved and OP2_INST_LSHR_INT is 22
+
+
+page: 10-27 (inconsistency)
+	definition of ALU_WORD1_OP2
+	"Gaps in opcode values are not marked in the list below." -> They are sometimes marked but why then?
+	on page 10-29: "129 to 95 are for transcendental units only." only 129 is a valid opcode the other are reserved, it should have been: 129 to 156" or "129 to 159" (like it was noted on page 10-27)
+
+page 10-38 (minor typo)
+	"ALU_WORD0_LDS_iDX_OP" should be ALU_WORD0_LDS_IDX_OP
+
+page 10-40: (inconsistency)
+	ALU_WORD1_LDS_IDX_OP
+	in ALU_INST field description
+		"[17:13] enum(5)
+		[16:0] Reserved.
+		17 OP3_INST_LDS_IDX_OP: This opcodes implies ALU_WORD*_LDS_IDX_OP encoding.
+		[31:18] Reserved."
+	bits 16:0 and 31:18 are not reserved, they are used very much in ALU_WORD1_LDS_IDX_OP

@@ -53,22 +53,22 @@ int main()
 // 	code = gpu_asm::byte_mirror(code);
 	
 	
-	gpu_disassembler dis(asmdef);
+/*	gpu_disassembler dis(asmdef);
 	
-	cout << "disassemble: " << endl << dis.disassemble(code) << endl;
-/*	
+	cout << "disassemble: " << endl << dis.disassemble(code) << endl;*/
+	
 	ifstream f2("test.asm");
 	
 	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
 	
-	for (int i = 0; i < codes.size(); i++)
+	for (int i = 0; i < codes.size(); i+=2)
 	{
-		printf("%i : 0x%.8X\n", i, codes[i]);
+		printf("%i : 0x%.8X 0x%.8X\n", i, codes[i], codes[i+1]);
 	}
 	
 	FILE *f3 = fopen("ki.dat", "w");
 	
 	fwrite(&codes[0], 1, sizeof(uint32_t)*codes.size(), f3);
 	
-	fclose(f3);*/
+	fclose(f3);
 }

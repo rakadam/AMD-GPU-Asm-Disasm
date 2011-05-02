@@ -141,10 +141,10 @@ architecture R800 Evergreen;
 	
 	microcode CF_WORD1(32):
 		enum(2) COND:
-			CF_COND_ACTIVE;
-			CF_COND_FALSE;
-			CF_COND_BOOL;
-			CF_COND_NOT_BOOL;
+			CF_COND_ACTIVE 0 default;
+			CF_COND_FALSE 1;
+			CF_COND_BOOL 2;
+			CF_COND_NOT_BOOL 3;
 		end enum;
 		
 		enum(8) CF_INST:
@@ -419,6 +419,7 @@ architecture R800 Evergreen;
 	tuple instr (64): \
 		microcode CF_WORD0; \
 		microcode CF_WORD1; \
+		option JUMPTABLE_SE_MEANS_NOTHING; \
 		option opt ; \
 		constraints: \
 			CF_WORD1.CF_INST == CF_INST_ ## instr; \
