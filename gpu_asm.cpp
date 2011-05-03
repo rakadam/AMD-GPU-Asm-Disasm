@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstdio>
 #include <cmath>
+#include <algorithm>
 #include "gpu_asm.hpp"
 #include "asm_parser.hpp"
 
@@ -18,28 +19,174 @@ gpu_assembler::gpu_assembler(const gpu_asm::asm_definition& asmdef) : asmdef(asm
 std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 {
 	std::vector<uint32_t> data;
-	parsed_instructions = parse_asm_text(text);
+	std::vector<gpu_asm::instruction> raw_stream = parse_asm_text(text);
+	labels.clear();
+	parsed_instructions.clear();
+	
+	string cf_prefix = "CF_";
+	string alu_prefix = "ALU_";
 	
 	//split parsed instructions into data and control flow
+	for (int i = 0; i < int(raw_stream.size()); i++)
+	{
+		gpu_asm::instruction instr = raw_stream[i];
+		
+		if (instr.label != "")
+		{
+			labels[instr.label] = -1; //reserve label
+		}
+		
+		if (asmdef.microcode_format_tuples.count(instr.name))
+		{
+			auto tuple = asmdef.microcode_format_tuples.at(instr.name);
+			
+			if (tuple.tuple.front().substr(0, cf_prefix.size()) == cf_prefix)
+			{
+				cf_instruction cfi;
+				
+				cfi.instr = instr;
+				parsed_instructions.push_back(cfi);
+			}
+			else
+			{
+				if (parsed_instructions.size() == 0)
+				{
+					throw runtime_error("Error: the program seems to be starting with a dataflow instruction, which lacks control flow");
+				}
+				
+				parsed_instructions.back().df_clause.push_back(instr);
+			}
+		}
+		else
+		{
+			throw runtime_error("Undefine instruction: " + instr.name);
+		}
+	}
 	
-	//dummy generate control flow to get address of labels
+	//dummy generate control flow to get address of labels, and size of the control flow
 	
-	//generate data flow clauses, separately attributed to specific control flow instructions
-	
-	//allocate data flow clauses after the control flow
-	
-	//fill ADDR and COUNT fields of the control flow in the parsed format, to refer to the clauses
-	
-	//generate final control flow code
-	
-	//copy clauses into their final place
-	
+	int dword_pos = 0;
 	
 	for (int i = 0; i < int(parsed_instructions.size()); i++)
 	{
-		std::vector<uint32_t> instr = assemble_instruction(parsed_instructions[i]);
+		auto instr = parsed_instructions[i].instr;
 		
-		data.insert(data.end(), instr.begin(), instr.end());
+		if (instr.label != "")
+		{
+			
+			labels[instr.label] = dword_pos;
+		}
+		
+		assert(dword_pos%2 == 0);
+		
+		parsed_instructions[i].cf_pos = dword_pos;
+		parsed_instructions[i].cf_codes = assemble_instruction(instr);
+		dword_pos += parsed_instructions[i].cf_codes.size();
+	}
+		
+	//generate data flow clauses, separately attributed to specific control flow instructions
+	
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		vector<uint32_t> codes;
+		
+		for (int j = 0; j < int(parsed_instructions[i].df_clause.size()); j++)
+		{
+			std::vector<uint32_t> code = assemble_instruction(parsed_instructions[i].df_clause[j]);
+			codes.insert(codes.end(), code.begin(), code.end());
+		}
+		
+		parsed_instructions[i].df_codes = codes;
+	}
+	
+	//allocate data flow clauses after the control flow
+	
+	int data_flow_index = dword_pos+10;
+	
+	//first allocate ALU clauses they only need normal 64 alignment (we hope)
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		if (parsed_instructions[i].df_codes.size())
+		{
+			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
+			
+			if (tuple.tuple.front().substr(0, alu_prefix.size()) == alu_prefix)
+			{
+				data_flow_index += data_flow_index%2; //aliging to 64 bits
+				
+				parsed_instructions[i].df_pos = data_flow_index;
+				data_flow_index += parsed_instructions[i].df_codes.size();
+			}
+		}
+	}
+	
+	//Than allocate fetch clauses they need normal 128 alignment
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		if (parsed_instructions[i].df_codes.size())
+		{
+			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
+			
+			if (tuple.tuple.front().substr(0, alu_prefix.size()) != alu_prefix)
+			{
+				if (data_flow_index%4)
+				{
+					data_flow_index += 4-data_flow_index%4; //align 128 bits
+				}
+				
+				parsed_instructions[i].df_pos = data_flow_index;
+				data_flow_index += parsed_instructions[i].df_codes.size();
+			}
+		}
+	}
+
+	data_flow_index += 4-data_flow_index%4; //end padding
+	
+	//fill ADDR and COUNT fields of the control flow in the parsed format, to refer to the clauses
+
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		if (parsed_instructions[i].df_codes.size())
+		{
+			int dv = 2;
+			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
+			
+			if (tuple.tuple.front().substr(0, alu_prefix.size()) == alu_prefix)
+			{
+				dv = 2; //size of the slot for ALU clauses
+			}
+			else
+			{
+				dv = 4; //size of the instruction for Texture of Vertex clauses
+			}
+			
+			parsed_instructions[i].instr.fields.push_back(gpu_asm::microcode_field("ADDR", parsed_instructions[i].df_pos/2));
+			parsed_instructions[i].instr.fields.push_back(gpu_asm::microcode_field("COUNT", parsed_instructions[i].df_codes.size()/dv - 1));
+// 			cout << parsed_instructions[i].instr.name << " " << parsed_instructions[i].df_codes.size() << endl;
+		}
+	}
+	
+	//generate final control flow code
+	
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		auto instr = parsed_instructions[i].instr;
+		
+		parsed_instructions[i].cf_codes = assemble_instruction(instr);
+	}
+	
+	//copy clauses into their final place
+	
+	data.resize(data_flow_index);
+	
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		copy(parsed_instructions[i].cf_codes.begin(), parsed_instructions[i].cf_codes.end(), data.begin()+parsed_instructions[i].cf_pos);
+		
+		if (parsed_instructions[i].df_clause.size())
+		{
+			copy(parsed_instructions[i].df_codes.begin(), parsed_instructions[i].df_codes.end(), data.begin()+parsed_instructions[i].df_pos);
+		}
 	}
 	
 	return data;
@@ -57,6 +204,12 @@ std::vector<uint32_t> gpu_assembler::assemble_instruction(gpu_asm::instruction i
 	
 	auto tuple = asmdef.microcode_format_tuples.at(instr.name);
 	
+	for (auto i = tuple.constraints.begin(); i != tuple.constraints.end(); i++)
+	{
+		gpu_asm::microcode_field field(i->first.second, 0);
+		field.enum_elem = i->second;
+		instr.fields.push_back(field);
+	}
 	
 	int instr_lit_num = 0;
 	int tuple_lit_num = 0;
@@ -156,6 +309,16 @@ uint32_t gpu_assembler::gen_field_mask(gpu_asm::field field_def, gpu_asm::microc
 		if (field.enum_elem != "")
 		{
 			throw runtime_error("Field is an INT not an enum: " + instr.name + "." + field.name + " invalid enum elem: \"" + field.enum_elem + "\"");
+		}
+		
+		if (field.label != "")
+		{
+			if (labels.count(field.label) == 0)
+			{
+				throw runtime_error("Undefined label: \"" + field.label + "\" in: " + instr.name + "." + field.name);
+			}
+			
+			field.offset = labels.at(field.label)/2;
 		}
 		
 		return gen_mask(field.offset, field_def, instr);
@@ -261,7 +424,7 @@ std::string gpu_disassembler::disassemble(std::vector<uint32_t> data)
 {
 	disassemble_cf(data); //prepare labels!
 	
-	cout << endl << endl << endl;
+// 	cout << endl << endl << endl;
 	
 	return disassemble_cf(data);
 }
@@ -357,7 +520,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 		if (data.size() == 0)
 		{
-			cout << "zero size reached" << endl;
+// 			cout << "zero size reached" << endl;
 			return result;
 		}
 		
@@ -404,15 +567,15 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	
 	set<int> literal_chan_read;
 	
-	cout << data.size() << " " << clause.addr << " " << clause.len << " " << clause.prefix << endl;
+// 	cout << data.size() << " " << clause.addr << " " << clause.len << " " << clause.prefix << endl;
 	
 	data.erase(data.begin(), data.begin()+clause.addr*2);
 	
-	printf("%.8x\n", data.front());
+// 	printf("%.8x\n", data.front());
 	
 	string filter_prefix2 = filter_prefix;
 	
-	if (filter_prefix == "TEX_") //WTF?
+	if (filter_prefix == "TEX_")
 	{
 		filter_prefix2 = "VTX_";
 	}
@@ -422,16 +585,16 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		filter_prefix2 = "TEX_";
 	}
 	
-	cout << filter_prefix2 << endl;
+// 	cout << filter_prefix2 << endl;
 	
-	cout << clause.addr*2 << " ";
+// 	cout << clause.addr*2 << " ";
 	
 	for (auto i = label_table.begin(); i != label_table.end(); i++)
 	{
-		cout << i->first << " ";
+// 		cout << i->first << " ";
 	}
 	
-	cout << endl;
+// 	cout << endl;
 	
 	
 	for (int icount = 0; icount < clause.len; icount++)

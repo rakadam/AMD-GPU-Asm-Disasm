@@ -1,3 +1,4 @@
+in R800_isa.book revision 1.0e
 
 inconsistency through the whole pdf:
 	"WORD" is used instead of DWORD, which is okay if you define 32 as a WORD, but sometimes the more traditional DWORD is mixed in too.
@@ -12,7 +13,7 @@ page: 9-37 (embarassing typo)
 	Compares the src0 with floating-point ero"
 	should be zero
 
-	page: 9-243 (wrong pseudo code)
+page: 9-243 (wrong pseudo code)
 	"SQRT_IEEE
 	Scalar square root. Useful for normal compression.
 	If (src0 == 1.0f) {
@@ -23,20 +24,50 @@ page: 9-37 (embarassing typo)
 	}"
 	should be ApproximateSqrt(srcC)
 
-page: 9-35 (order of the dwords are mixed up)
+page: 9-35 (order of the dwords is mixed up)
 	MEM_RAT_CACHELESS
 	order in the pdf:
 	"CF_ALLOC_EXPORT_WORD1_BUF CF_ALLOC_EXPORT_WORD0_RAT"
-	but both the numbering and the binary images generated from OpenCL imply reverse order.
+	but both the numbering and the binary images generated from OpenCL imply the reverse.
 	The ordering is consistently wrong on the figure depicting binary structure of the words too. 
 
-	I haven't tested it, but it might be the case with page: 9-34 (MEM_RAT), page 9-36 (MEM_RAT_COMBINED_CACHELESS)
+	I haven't tested it, but it might be the case with page: 9-34 (MEM_RAT) and page 9-36 (MEM_RAT_COMBINED_CACHELESS)
 
 page: 9-131 (opcode is wrong)
 	"LSHR_INT
 	ALU_INST == OP2_INST_LSHR_INT, opcode 113 (0x71)"
 	but according to page 10-28 (ALU_WORD1_OP2) the opcode 113 is reserved and OP2_INST_LSHR_INT is 22
 
+  ASHR_INT and LSHR_INT shares a similar problem
+
+page: 9-67 (opcode is wrong)
+	CNDE
+	opcode 24 is written here
+	but ALU_WORD1_OP3 defines OP3_INST_MULADD_IEEE to be 24
+	
+	ALU_WORD1_OP3 defines these opcodes at page 10-34:
+		25 OP3_INST_CNDE
+		26 OP3_INST_CNDGT
+		27 OP3_INST_CNDGE
+	
+	but at page 9-71 the opcode of CNDGT is 25
+	but at page 9-69 the opcode of CNDGE is 26
+	
+	CND.._INT seems okay
+	
+	I haven't tested which one is okay, but the ALU_WORD1_OP3 definition seems to be the correct one.
+	
+page: 9-68 (opcode enum name is wrong)
+	CNDE_INT
+	"ALU_INST == OP3_INST_CMOVE_INT"
+	
+	there is no OP3_INST_CMOVE_INT enum defined at all, instead there is a  OP3_INST_CNDE_INT with the same opcode numeric value
+	
+	instructions: CNDE, CNDGE, CNDGE_INT, CNDGT, CNDGT_INT share the same problem 
+	
+	non existent CMOVE is mentioned at:
+		page 4-21 table 4.4
+		glossary-7 (written like "CMOV")
 
 page: 10-27 (inconsistency)
 	definition of ALU_WORD1_OP2
@@ -54,3 +85,4 @@ page 10-40: (inconsistency)
 		17 OP3_INST_LDS_IDX_OP: This opcodes implies ALU_WORD*_LDS_IDX_OP encoding.
 		[31:18] Reserved."
 	bits 16:0 and 31:18 are not reserved, they are used very much in ALU_WORD1_LDS_IDX_OP
+

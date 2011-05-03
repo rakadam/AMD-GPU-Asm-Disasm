@@ -99,6 +99,7 @@ private:
 struct microcode_field
 {
 	microcode_field() : name(""), offset_is_set(false), offset(0), enum_elem("") {}
+	microcode_field(std::string name, int index) : name(name), offset_is_set(false), offset(index), enum_elem("") {}
 	std::string name;
 	bool offset_is_set;
 	long offset; //for INT it is the actual value, for enum it is offset, nothing for BOOL

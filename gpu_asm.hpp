@@ -7,7 +7,19 @@
 class gpu_assembler
 {
 	gpu_asm::asm_definition asmdef;
-	std::vector<gpu_asm::instruction> parsed_instructions;
+	
+	struct cf_instruction
+	{
+		gpu_asm::instruction instr;
+		std::vector<gpu_asm::instruction> df_clause;
+		int cf_pos; //allocated position of the controlflow
+		std::vector<uint32_t> cf_codes;
+		int df_pos; //allocated position of the dataflow if present
+		std::vector<uint32_t> df_codes;
+	};
+	
+	std::vector<cf_instruction> parsed_instructions;
+	std::map<std::string, int> labels;
 	
 public:
 	gpu_assembler(const gpu_asm::asm_definition& asmdef);
