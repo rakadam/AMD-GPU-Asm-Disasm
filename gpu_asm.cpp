@@ -692,6 +692,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		
 		if (match_num == 0)
 		{
+			cerr << result << endl;
 			cerr << "Undefine instruction: " << endl;
 			
 			printf("%.8X\n", data[0]);
