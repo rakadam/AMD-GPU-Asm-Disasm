@@ -372,9 +372,9 @@ architecture R800 Evergreen;
 		end enum;
 
 		enum(5)	ALU_INST:
-			Vector_only				4:17;
-			Vector_or_trans			20:31;
-			Trans_only				31;
+			(*Vector_only 4:17*)
+			(*Vector_or_trans 20:31*)
+			(*Trans_only 31*)
 			OP3_INST_BFE_UINT				 4;
 			OP3_INST_BFE_INT				 5;
 			OP3_INST_BFI_INT				 6;
@@ -1097,6 +1097,9 @@ architecture R800 Evergreen;
 //	Instructions for Fetches Through a Vertex Cache Clause
 //==============================================================================
 
+	//--------------------------------------------------------------------------
+	//	VTX_WORD0
+	//--------------------------------------------------------------------------	
 	microcode VTX_WORD0(32):
 		enum(5) VC_INST:
 			VC_INST_FETCH 0;
@@ -1126,7 +1129,10 @@ architecture R800 Evergreen;
 		field SRC_SEL_X(25:24) CHAN_SEL;
 		field MEGA_FETCH_COUNT(31:26) INT;
 	end microcode;
-	
+
+	//--------------------------------------------------------------------------
+	//	VTX_WORD1_GPR
+	//--------------------------------------------------------------------------		
 	microcode VTX_WORD1_GPR(32):
 		enum(3) CHAN_SEL:
 			SEL_X 0;
@@ -1135,6 +1141,7 @@ architecture R800 Evergreen;
 			SEL_W 3;
 			SEL_0 4;
 			SEL_1 5;
+			(*reserved 6*)
 			SEL_MASK 7;
 		end enum;
 	
@@ -1167,7 +1174,52 @@ architecture R800 Evergreen;
 		field SRF_MODE_ALL(31) SRF_MODE_ALL;
 	end microcode;
 
-	
+	//--------------------------------------------------------------------------
+	//	VTX_WORD1_SEM
+	//--------------------------------------------------------------------------		
+	microcode VTX_WORD1_SEM(32):
+		enum(3) CHAN_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+			(*reserved 6*)
+			SEL_MASK	7;
+		end enum;
+
+		enum(2) NUM_FORMAT_ALL:
+			NUM_FORMAT_NORM		0;
+			NUM_FORMAT_INT		1;
+			NUM_FORMAT_SCALED	2;
+		end enum;
+
+		enum(1) FORMAT_COMP_ALL:
+			FORMAT_COMP_UNSIGNED	0 default;
+			FORMAT_COMP_SIGNED		1;
+		end enum;
+
+		enum(1) SRF_MODE_ALL:
+			SRF_MODE_ZERO_CLAMP_MINUS_ONE	0 default;
+			SRF_MODE_NO_ZERO				1;
+		end enum;
+
+		field SEMANTIC_ID		(7:0)	INT;
+		field DST_SEL_X			(11:9)	CHAN_SEL;
+		field DST_SEL_Y			(14:12)	CHAN_SEL;
+		field DST_SEL_Z			(17:15)	CHAN_SEL;
+		field DST_SEL_W			(20:18)	CHAN_SEL;
+		field USE_CONST_FIELDS	(21)	BOOL;
+		field DATA_FORMAT		(27:22)	INT;
+		field NUM_FORMAT_ALL	(29:28)	NUM_FORMAT_ALL;
+		field FORMAT_COMP_ALL	(30)	FORMAT_COMP_ALL;
+		field SRF_MODE_ALL		(31)	SRF_MODE_ALL;
+	end microcode;
+
+	//--------------------------------------------------------------------------
+	//	VTX_WORD2
+	//--------------------------------------------------------------------------		
 	microcode VTX_WORD2(32):
 		enum(2) ENDIAN_SWAP:
 			ENDIAN_NONE 0 default;
@@ -1188,7 +1240,132 @@ architecture R800 Evergreen;
 		field MEGA_FETCH(19) BOOL;
 		field ALT_CONST(20) BOOL;
 		field BUFFER_INDEX_MODE(22:21) BUFFER_INDEX_MODE;
+		field RESERVED			(31:23)	INT;
 	end microcode;
+
+
+//==============================================================================
+//	Instructions for Fetches Through a Texture Cache Clause
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	TEX_WORD0
+	//--------------------------------------------------------------------------	
+	microcode TEX_WORD0(32):
+		enum(5)	TEX_INST:
+			(*reserved 2:0*)
+			TEX_INST_LD						 3;
+			TEX_INST_GET_TEXTURE_RESINFO	 4;
+			TEX_INST_GET_NUMBER_OF_SAMPLES	 5;
+			TEX_INST_GET_COMP_TEX_LOD		 6;
+			TEX_INST_GET_GRADIENTS_H		 7;
+			TEX_INST_GET_GRADIENTS_V		 8;
+			TEX_INST_SET_TEXTURE_OFFSETS	 9;
+			TEX_INST_KEEP_GRADIENTS			10;
+			TEX_INST_SET_GRADIENTS_H		11;
+			TEX_INST_SET_GRADIENTS_V		12;
+			(*reserved 15:13*)
+			TEX_INST_SAMPLE					16;
+			TEX_INST_SAMPLE_L				17;
+			TEX_INST_SAMPLE_LB				18;
+			TEX_INST_SAMPLE_LZ				19;
+			TEX_INST_SAMPLE_G.				20;
+			TEX_INST_GATHER4:				21;
+			TEX_INST_SAMPLE_G_LB			22;
+			TEX_INST_GATHER4_O				23;
+			TEX_INST_SAMPLE_C				24;
+			TEX_INST_SAMPLE_C_L				25;
+			TEX_INST_SAMPLE_C_LB			26;
+			TEX_INST_SAMPLE_C_LZ			27;
+			TEX_INST_SAMPLE_C_G				28;
+			TEX_INST_GATHER4_C				29;
+			TEX_INST_SAMPLE_C_G_LB			30;
+			TEX_INST_GATHER4_C_O			31;
+		end enum;
+		
+		enum(2)	INST_MOD:
+			(*LD					 3;*)
+			(*GetGradientsH		 7;*)
+			(*GetGradientsV		 8;*)
+			(*Gather4				21;*)
+		end enum;
+
+		enum(2)	INDEX_MODE:
+			CF_INDEX_NONE;
+			CF_INDEX_0;
+			CF_INDEX_1;
+			CF_INVALID;
+		end enum;
+
+		field TEX_INST				(4:0)	TEX_INST;
+		field INST_MOD				(6:5)	INST_MOD;	//	FIXME: check this field
+		field FETCH_WHOLE_QUAD		(7)		BOOL;
+		field RESOURCE_ID			(15:8)	INT;
+		field SRC_GPR				(22:16)	INT;
+		field SRC_REL				(23)	BOOL;
+		field ALT_CONST				(24)	BOOL;
+		field RESOURCE_INDEX_MODE	(26:25)	INDEX_MODE;
+		field SAMPLER_INDEX_MODE	(28:27)	INDEX_MODE;
+		field RESERVED				(31:29)	INT;
+	end microcode;
+
+	//--------------------------------------------------------------------------
+	//	TEX_WORD1
+	//--------------------------------------------------------------------------	
+	microcode TEX_WORD1(32):
+		enum(3) CHAN_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+			(*reserved 6*)
+			SEL_MASK	7;
+		end enum;
+
+		enum(2)	COORD_TYPE:
+			TEX_UNNORMALIZED	0;
+			TEX_NORMALIZED		1;
+		end enum;
+
+		field DST_GPR			(6:0)	INT;
+		field DST_REL			(7)		BOOL;
+		field DST_SEL_X			(11:9)	CHAN_SEL;
+		field DST_SEL_Y			(14:12)	CHAN_SEL;
+		field DST_SEL_Z			(17:15)	CHAN_SEL;
+		field DST_SEL_W			(20:18)	CHAN_SEL;
+		field LOD_BIAS			(27:21)	INT;
+		field COORD_TYPE_X		(28)	COORD_TYPE;
+		field COORD_TYPE_Y		(29)	COORD_TYPE;
+		field COORD_TYPE_Z		(30)	COORD_TYPE;
+		field COORD_TYPE_W		(31)	COORD_TYPE;
+	end microcode;
+
+	//--------------------------------------------------------------------------
+	//	TEX_WORD2
+	//--------------------------------------------------------------------------	
+	microcode TEX_WORD2(32):
+		enum(3)	SRC_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+		end enum;
+
+		field OFFSET_X			(4:0)	INT;
+		field OFFSET_Y			(9:5)	INT;
+		field OFFSET_Z			(14:10)	INT;
+		field SAMPLER_ID		(19:15)	INT;
+		field SRC_SEL_X			(22:20)	SRC_SEL;
+		field SRC_SEL_Y			(25:23)	SRC_SEL;
+		field SRC_SEL_Z			(28:26)	SRC_SEL;
+		field SRC_SEL_W			(31:29)	SRC_SEL;
+	end microcode;
+
+
 
 	tuple MEM_RD_SCRATCH(128):
 		microcode MEM_RD_WORD0;
