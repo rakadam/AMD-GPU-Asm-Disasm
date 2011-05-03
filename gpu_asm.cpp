@@ -492,7 +492,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			data.erase(data.begin(), data.begin() + match_size);
 		}
 		
-// 		cout << result << endl;
+		cout << result << endl;
 		
 		if (clause_todo.size())
 		{
@@ -692,8 +692,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		
 		if (match_num == 0)
 		{
-			cerr << result << endl;
-			cerr << "Undefine instruction: " << endl;
+			cerr << "Undefined instruction: " << endl;
 			
 			printf("%.8X\n", data[0]);
 			if (data.size() > 1)
