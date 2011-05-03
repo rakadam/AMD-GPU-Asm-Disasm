@@ -492,7 +492,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			data.erase(data.begin(), data.begin() + match_size);
 		}
 		
-		cout << result << endl;
+// 		cout << result << endl;
 		
 		if (clause_todo.size())
 		{

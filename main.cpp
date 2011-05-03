@@ -37,8 +37,8 @@ int main()
 		0x00000000
 	};*/
 	
-	FILE *f4 = fopen("gpu_bin.bin", "r");
-// 	FILE *f4 = fopen("ki.dat", "r");
+// 	FILE *f4 = fopen("gpu_bin.bin", "r");
+	FILE *f4 = fopen("ki.dat", "r");
 	
 	uint32_t val;
 	

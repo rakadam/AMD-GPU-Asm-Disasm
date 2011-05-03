@@ -11,7 +11,7 @@ inconsistency through the whole pdf:
 page: 9-37 (embarassing typo)
 	"CNDNE_64
 	Compares the src0 with floating-point ero"
-	should be zero
+	should be "zero"
 
 page: 9-243 (wrong pseudo code)
 	"SQRT_IEEE
@@ -22,7 +22,11 @@ page: 9-243 (wrong pseudo code)
 	Else {
 	dst = ApproximateRecipSqrt(srcC);
 	}"
-	should be ApproximateSqrt(srcC)
+	should be "ApproximateSqrt" and "(src0)"
+	or srcC might have some (?) meaning but it's undefined
+	
+page: 9-214 (wrong pseudo code)
+	RECIPSQRT_IEEE on page  uses "(srcC)" too instead of src0
 
 page: 9-35 (order of the dwords is mixed up)
 	MEM_RAT_CACHELESS

@@ -906,8 +906,21 @@ architecture R800 Evergreen;
 	ALU_INST_OP2_TEMPLATE(LSHL_INT);
 	ALU_INST_OP2_TEMPLATE(ASHR_INT);
 	ALU_INST_OP2_TEMPLATE(AND_INT);
-	ALU_INST_OP2_TEMPLATE(GROUP_BARRIER);
-	
+
+	tuple GROUP_BARRIER(64):
+		microcode ALU_WORD0;
+		microcode ALU_WORD1_OP2;
+		option SRC0_SEL_MEANS_NOTHING;
+		option SRC1_SEL_MEANS_NOTHING;
+		option BANK_SWIZZLE_MEANS_NOTHING;
+		option DST_CHAN_MEANS_NOTHING;
+		option SRC0_CHAN_MEANS_NOTHING;
+		option SRC1_CHAN_MEANS_NOTHING;
+		constraints:
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_GROUP_BARRIER;
+		end constraints;
+	end tuple;
+
 #define CF_ALU_INST_TEMPLATE(instr) \
 	tuple instr (64): \
 		microcode CF_ALU_WORD0; \
