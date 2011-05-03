@@ -69,7 +69,7 @@ page: 9-68 (opcode enum name is wrong)
 	
 	instructions: CNDE, CNDGE, CNDGE_INT, CNDGT, CNDGT_INT share the same problem 
 	
-	non existent CMOVE is mentioned at:
+	nonexistent CMOVE is mentioned at:
 		page 4-21 table 4.4
 		glossary-7 (written like "CMOV")
 
@@ -90,3 +90,10 @@ page 10-40: (inconsistency)
 		[31:18] Reserved."
 	bits 16:0 and 31:18 are not reserved, they are used very much in ALU_WORD1_LDS_IDX_OP
 
+page 10-47: (missing enum)
+	in VTX_WORD1_GPR, DATA_FORMAT field
+	instead of explaining the possible values I found this:
+	"See list for DATA_FORMAT [27:22] in VTX_WORD1_GPR, page 10-47, and VTX_WORD1_SEM, page 10-49."
+	Which is a self reference. It also the same on page 10-49.
+	I haven't found any other mention of the DATA_FORMAT. If I want to probram a vertex fetch, then I have to reverse engineer.
+	
