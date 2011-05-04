@@ -664,13 +664,18 @@ architecture R800 Evergreen;
 	end microcode;
 
 
-	microcode padding_32(32):
-	end microcode;
+//==============================================================================
+//	Memory Read Instructions
+//==============================================================================
 
+	//--------------------------------------------------------------------------
+	//	MEM_RD_WORD0
+	//--------------------------------------------------------------------------
 	microcode MEM_RD_WORD0(32):
 		enum(3) MEM_OP:
 			MEM_RD_SCRATCH 0;
 			MEM_RD_SCATTER 2;
+			(*reserved 7:4*)
 		end enum;
 		
 		enum(5) VC_INST:
@@ -684,21 +689,88 @@ architecture R800 Evergreen;
 			SEL_W;
 		end enum;
 		
-		field VC_INST(4:0) VC_INST; 
-		field MEM_OP(10:8) MEM_OP;
+		field VC_INST(4:0) VC_INST;
 		field ELEM_SIZE(6:5) INT;
 		field FETCH_WHOLE_QUAD(7) BOOL;
-		/*...*/
+		field MEM_OP(10:8) MEM_OP;
+		field UNCACHED			(11)	BOOL;
+		field INDEXED			(12)	BOOL;
+		field MEM_REQ_SIZE		(14:13)	INT;
+		field RESERVED			(15)	BOOL;
+		field SRC_GPR			(22:16)	INT;
+		field SRC_REL			(23)	BOOL;
 		field SRC_SEL_X(25:24) SRC_SEL_X;
-		/* TODO */
+		field BURST_CNT			(29:26)	INT;
+		field RESERVED2			(31:30)	INT;
 	end microcode;
 
+	//--------------------------------------------------------------------------
+	//	MEM_RD_WORD1
+	//--------------------------------------------------------------------------
 	microcode MEM_RD_WORD1(32):
-		/* TODO */
+		enum(3) CHAN_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+			(*reserved 6*)
+			SEL_MASK	7;
+		end enum;
+		
+		enum(2)	NUM_FORMAT_ALL:
+			NUM_FORMAT_NORM		0;
+			NUM_FORMAT_INT		1;
+			NUM_FORMAT_SCALED	2;
+		end enum;
+
+		enum(2)	FORMAT_COMP_ALL:
+			FORMAT_COMP_UNSIGNED	0;
+			FORMAT_COMP_SIGNED		1;
+		end enum;
+
+		enum(1) SRF_MODE_ALL:
+			SRF_MODE_ZERO_CLAMP_MINUS_ONE	0 default;
+			SRF_MODE_NO_ZERO				1;
+		end enum;
+
+		field DST_GPR			(6:0)	INT;
+		field DST_REL			(7)		BOOL;
+		field RESERVED			(8)		BOOL;
+		field DST_SEL_X			(11:9)	CHAN_SEL;
+		field DST_SEL_Y			(14:12)	CHAN_SEL;
+		field DST_SEL_Z			(17:15)	CHAN_SEL;
+		field DST_SEL_W			(20:18)	CHAN_SEL;
+		field RESERVED2			(21)	BOOL;
+		field DATA_FORMAT		(27:22)	INT;
+		field NUM_FORMAT_ALL	(29:28)	NUM_FORMAT_ALL;
+		field FORMAT_COMP_ALL	(30)	FORMAT_COMP_ALL;
+		field SRF_MODE_ALL		(31)	SRF_MODE_ALL;
 	end microcode;
 
+	//--------------------------------------------------------------------------
+	//	MEM_RD_WORD2
+	//--------------------------------------------------------------------------
 	microcode MEM_RD_WORD2(32):
-		/* TODO */
+		enum(2) ENDIAN_SWAP:
+			ENDIAN_NONE		0 default;
+			ENDIAN_8IN16	1;
+			ENDIAN_8IN32	2;
+		end enum;
+
+		field ARRAY_BASE		(12:0)	INT;
+		field RESERVED			(15:13)	INT;
+		field ENDIAN_SWAP		(17:16)	ENDIAN_SWAP;
+		field RESERVED2			(19:18)	INT;
+		field ARRAY_SIZE		(31:20)	INT;
+	end microcode;
+
+//==============================================================================
+//	Helper definitions
+//==============================================================================
+
+	microcode padding_32(32):
 	end microcode;
 
 	microcode LITERAL_CONSTANT_32(32):
