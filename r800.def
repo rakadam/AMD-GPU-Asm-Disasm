@@ -1438,6 +1438,158 @@ architecture R800 Evergreen;
 	end microcode;
 
 
+//==============================================================================
+//	 Global Data Share Read/Write Instructions
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	MEM_GDS_WORD0
+	//--------------------------------------------------------------------------
+	microcode MEM_GDS_WORD0(32):
+		enum(5) MEM_INST:
+			MEM_INST_MEM 2;
+		end enum;
+
+		enum(3)	MEM_OP:
+			(*reserved 3:0*)
+			MEM_GDS			4;
+			MEM_TF_WRITE	5;
+			(*reserved 7:6*)
+		end enum;
+
+		enum(2)	SRC_REL_MODE:
+			REL_NONE		0;
+			REL_LOOP		1;
+			REL_GLOBAL		2;
+		end enum;
+
+		enum(3)	SRC_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+			(*reserved 7:6*)
+		end enum;
+
+		field MEM_INST			(4:0)	MEM_INST;
+		field RESERVED			(7:5)	INT;
+		field MEM_OP			(10:8)	MEM_OP;
+		field SRC_GPR			(17:11)	INT;
+		field SRC_REL_MODE		(19:18)	SRC_REL_MODE;
+		field SRC_SEL_X			(22:20)	SRC_SEL;
+		field SRC_SEL_Y			(25:23)	SRC_SEL;
+		field SRC_SEL_Z			(28:26)	SRC_SEL;
+		field RESERVED			(31:29)	INT;
+	end microcode;
+
+	//--------------------------------------------------------------------------
+	//	MEM_GDS_WORD1
+	//--------------------------------------------------------------------------
+	microcode MEM_GDS_WORD1(32):
+		enum(2)	DST_REL_MODE:
+			REL_NONE		0;
+			REL_LOOP		1;
+			REL_GLOBAL		2;
+		end enum;
+
+		enum(6)	GDS_OP:
+			DS_INST_ADD				 0;
+			DS_INST_SUB				 1;
+			DS_INST_RSUB			 2;
+			DS_INST_INC				 3;
+			DS_INST_DEC				 4;
+			DS_INST_MIN_INT			 5;
+			DS_INST_MAX_INT			 6;
+			DS_INST_MIN_UINT		 7;
+			DS_INST_MAX_UINT		 8;
+			DS_INST_AND				 9;
+			DS_INST_OR				10;
+			DS_INST_XOR				11;
+			DS_INST_MSKOR			12;
+			DS_INST_WRITE			13;
+			DS_INST_WRITE_REL		14;
+			DS_INST_WRITE2			15;
+			DS_INST_CMP_STORE		16;
+			DS_INST_CMP_STORE_SPF	17;
+			DS_INST_BYTE_WRITE		18;
+			DS_INST_SHORT_WRITE		19;
+			(*reserved 20-31*)
+			DS_INST_ADD_RET			32;
+			DS_INST_RSUB_RET		34;
+			DS_INST_INC_RET			35;
+			DS_INST_DEC_RET			36;
+			DS_INST_MIN_INT_RET		37;
+			DS_INST_MAX_INT_RET		38;
+			DS_INST_MIN_UINT_RET	39;
+			DS_INST_MAX_UINT_RET	40;
+			DS_INST_AND_RET			41;
+			DS_INST_OR_RET			42;
+			DS_INST_XOR_RET			43;
+			DS_INST_MSKOR_RET					44;
+			DS_INST_XCHG_RET					45;
+			DS_INST_XCHG_REL_RET				46;
+			DS_INST_XCHG2_RET					47;
+			DS_INST_CMP_XCHG_RET				48;
+			DS_INST_CMP_XCHG_SPF_RET			49;
+			DS_INST_READ_RET					50;
+			DS_INST_READ_REL_RET				51;
+			DS_INST_READ2_RET					52;
+			DS_INST_READWRITE_RET				53;
+			DS_INST_BYTE_READ_RET				54;
+			DS_INST_UBYTE_READ_RET				55;
+			DS_INST_SHORT_READ_RET				56;
+			DS_INST_USHORT_READ_RET				57;
+			(*reserved 62:58*)
+			DS_INST_ATOMIC_ORDERED_ALLOC_RET	63;
+		end enum;
+
+		enum(2)	UAV_INDEX_MODE:
+			CF_INDEX_NONE		0;
+			CF_INDEX_0			1;
+			CF_INDEX_1			2;
+			CF_INDEX_INVALID	3;
+		end enum;
+
+		field DST_GPR			(6:0)	INT;
+		field DST_REL_MODE		(8:7)	DST_REL_MODE;
+		field GDS_OP			(14:9)	GDS_OP;
+		field RESERVED			(15)	BOOL;
+		field SRC_GPR			(22:16)	INT;
+		field RESERVED2			(23)	BOOL;
+		field UAV_INDEX_MODE	(25:24)	UAV_INDEX_MODE;
+		field UAV_ID			(29:26)	INT;
+		field ALLOC_CONSUME		(30)	BOOL;
+		field BCAST_FIRST_REQ	(31)	BOOL;
+	end microcode;
+
+	//--------------------------------------------------------------------------
+	//	MEM_GDS_WORD2
+	//--------------------------------------------------------------------------
+	microcode MEM_GDS_WORD2(32):
+		enum(3)	DST_SEL:
+			SEL_X		0;
+			SEL_Y		1;
+			SEL_Z		2;
+			SEL_W		3;
+			SEL_0		4;
+			SEL_1		5;
+			(*reserved 6*)
+			SEL_MASK	7;
+		end enum;
+
+		field DST_SEL_X		(2:0)	DST_SEL;
+		field DST_SEL_Y		(5:3)	DST_SEL;
+		field DST_SEL_Z		(8:6)	DST_SEL;
+		field DST_SEL_W		(11:9)	DST_SEL;
+		field RESERVED		(31:12)	INT;
+	end microcode;
+
+
+//==============================================================================
+//	
+//==============================================================================
 
 	tuple MEM_RD_SCRATCH(128):
 		microcode MEM_RD_WORD0;
