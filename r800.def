@@ -1588,6 +1588,74 @@ architecture R800 Evergreen;
 
 
 //==============================================================================
+//	Control Flow (CF) Instructions
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	CF ALU template
+	//--------------------------------------------------------------------------
+#define	CF_ALU_TEMPLATE( instr )					\
+	tuple instr (64):								\
+		microcode CF_ALU_WORD0;						\
+		microcode CF_ALU_WORD1;						\
+													\
+		constraints:								\
+			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
+		end constraints;							\
+	end tuple;										\
+
+	//--------------------------------------------------------------------------
+	//	CF ALU instructions
+	//--------------------------------------------------------------------------
+	CF_ALU_TEMPLATE( ALU				);
+	CF_ALU_TEMPLATE( ALU_BREAK			);
+	CF_ALU_TEMPLATE( ALU_CONTINUE		);
+	CF_ALU_TEMPLATE( ALU_ELSE_AFTER		);
+	CF_ALU_TEMPLATE( ALU_POP_AFTER		);
+	CF_ALU_TEMPLATE( ALU_POP2_AFTER		);
+	CF_ALU_TEMPLATE( ALU_PUSH_BEFORE	);
+
+	//--------------------------------------------------------------------------
+	//	Extended CF ALU template
+	//--------------------------------------------------------------------------
+#define	EXT_CF_ALU_TEMPLATE( instr )				\
+	tuple instr (128):								\
+		microcode CF_ALU_WORD0;						\
+		microcode CF_ALU_WORD1;						\
+		microcode CF_ALU_WORD0_EXT;					\
+		microcode CF_ALU_WORD1_EXT;					\
+													\
+		constraints:								\
+			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
+		end constraints;							\
+	end tuple;										\
+
+	//--------------------------------------------------------------------------
+	//	Extended CF ALU instructions
+	//--------------------------------------------------------------------------
+	EXT_CF_ALU_TEMPLATE( ALU_EXTENDED );
+
+	//--------------------------------------------------------------------------
+	//	CF template
+	//--------------------------------------------------------------------------
+#define	CF_TEMPLATE( instr )					\
+	tuple instr (64):							\
+		microcode CF_WORD0;						\
+		microcode CF_WORD1;						\
+												\
+		constraints:							\
+			CF_WORD1.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple;									\
+
+	CF_TEMPLATE( CALL				);
+	CF_TEMPLATE( CALL_FS			);
+	CF_TEMPLATE( CUT_VERTEX			);
+	CF_TEMPLATE( ELSE				);
+	CF_TEMPLATE( EMIT_CUT_VERTEX	);
+	CF_TEMPLATE( EMIT_VERTEX		);
+
+//==============================================================================
 //	
 //==============================================================================
 
