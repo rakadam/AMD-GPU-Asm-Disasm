@@ -627,7 +627,6 @@ architecture R800 Evergreen;
 		end enum;
 
 		field SRC0_SEL		(8:0)	SRC_SEL;
-		field SRC1_SEL		(21:13)	SRC_SEL;
 		field SRC2_REL		(9)		BOOL;
 		field SRC2_CHAN		(11:10)	CHAN_SEL;
 		field IDX_OFFSET_1	(12)	BOOL;
@@ -826,9 +825,9 @@ architecture R800 Evergreen;
 		end enum;
 
 		field VALUE			(9:0)	INT;
-(* 		field Reserved		(15:10)	INT; *)
+ 		field RESERVED		(15:10)	INT;
 		field RESOURCE		(20:16)	INT;
-(* 		field Reserved		(24:21)	INT; *)
+ 		field RESERVED2		(24:21)	INT;
 		field SIGN			(25)	BOOL;
 		field VAL_INDEX_MO	(27:26)	VAL_INDEX_MO;
 		field RSRC_INDEX_M	(29:28)	RSRC_INDEX_M;
@@ -958,12 +957,12 @@ architecture R800 Evergreen;
 			CF_KCACHE_LOCK_LOOP_INDEX;
 		end enum;
 
-(* 		field Reserved						(3:0)	INT; *)
+ 		field RESERVED						(3:0)	INT;
 		field KCACHE_BANK_INDEX_MODE0		(5:4)	KCACHE_BANK_INDEX_MODE;
 		field KCACHE_BANK_INDEX_MODE1		(7:6)	KCACHE_BANK_INDEX_MODE;
 		field KCACHE_BANK_INDEX_MODE2		(9:8)	KCACHE_BANK_INDEX_MODE;
 		field KCACHE_BANK_INDEX_MODE3		(11:10)	KCACHE_BANK_INDEX_MODE;
-(* 		field Reserved						(21:12)	INT; *)
+ 		field RESERVED2						(21:12)	INT;
 		field KCACHE_BANK2					(25:22)	INT;
 		field KCACHE_BANK3					(29:26)	INT;
 		field KCACHE_MODE2					(31:30)	KCACHE_MODE2;
@@ -1341,8 +1340,8 @@ architecture R800 Evergreen;
 			TEX_INST_SAMPLE_L				17;
 			TEX_INST_SAMPLE_LB				18;
 			TEX_INST_SAMPLE_LZ				19;
-			TEX_INST_SAMPLE_G.				20;
-			TEX_INST_GATHER4:				21;
+			TEX_INST_SAMPLE_G				20;
+			TEX_INST_GATHER4				21;
 			TEX_INST_SAMPLE_G_LB			22;
 			TEX_INST_GATHER4_O				23;
 			TEX_INST_SAMPLE_C				24;
@@ -1355,12 +1354,12 @@ architecture R800 Evergreen;
 			TEX_INST_GATHER4_C_O			31;
 		end enum;
 		
-		enum(2)	INST_MOD:
+//		enum(2)	INST_MOD:
 			(*LD					 3;*)
 			(*GetGradientsH		 7;*)
 			(*GetGradientsV		 8;*)
 			(*Gather4				21;*)
-		end enum;
+//		end enum;
 
 		enum(2)	INDEX_MODE:
 			CF_INDEX_NONE;
@@ -1370,7 +1369,7 @@ architecture R800 Evergreen;
 		end enum;
 
 		field TEX_INST				(4:0)	TEX_INST;
-		field INST_MOD				(6:5)	INST_MOD;	//	FIXME: check this field
+		field INST_MOD				(6:5)	INT;
 		field FETCH_WHOLE_QUAD		(7)		BOOL;
 		field RESOURCE_ID			(15:8)	INT;
 		field SRC_GPR				(22:16)	INT;
@@ -1481,7 +1480,7 @@ architecture R800 Evergreen;
 		field SRC_SEL_X			(22:20)	SRC_SEL;
 		field SRC_SEL_Y			(25:23)	SRC_SEL;
 		field SRC_SEL_Z			(28:26)	SRC_SEL;
-		field RESERVED			(31:29)	INT;
+		field RESERVED2			(31:29)	INT;
 	end microcode;
 
 	//--------------------------------------------------------------------------
@@ -1602,12 +1601,12 @@ architecture R800 Evergreen;
 		constraints:								\
 			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
 		end constraints;							\
-	end tuple;										\
+	end tuple										\
 
 	//--------------------------------------------------------------------------
 	//	CF ALU instructions
 	//--------------------------------------------------------------------------
-	CF_ALU_TEMPLATE( ALU				);
+//	CF_ALU_TEMPLATE( ALU				);
 	CF_ALU_TEMPLATE( ALU_BREAK			);
 	CF_ALU_TEMPLATE( ALU_CONTINUE		);
 	CF_ALU_TEMPLATE( ALU_ELSE_AFTER		);
@@ -1628,7 +1627,7 @@ architecture R800 Evergreen;
 		constraints:								\
 			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
 		end constraints;							\
-	end tuple;										\
+	end tuple										\
 
 	//--------------------------------------------------------------------------
 	//	Extended CF ALU instructions
@@ -1646,7 +1645,7 @@ architecture R800 Evergreen;
 		constraints:							\
 			CF_WORD1.CF_INST == CF_INST_ ## instr;	\
 		end constraints;						\
-	end tuple;									\
+	end tuple									\
 
 	//--------------------------------------------------------------------------
 	//	CF instructions
@@ -1664,10 +1663,10 @@ architecture R800 Evergreen;
 	CF_TEMPLATE( KILL				);
 	CF_TEMPLATE( LOOP_BREAK			);
 	CF_TEMPLATE( LOOP_CONTINUE		);
-	CF_TEMPLATE( LOOP_END			);
-	CF_TEMPLATE( LOOP_START			);
-	CF_TEMPLATE( LOOP_START_DX10	);
-	CF_TEMPLATE( LOOP_START_NO_AL	);
+//	CF_TEMPLATE( LOOP_END			);
+//	CF_TEMPLATE( LOOP_START			);
+//	CF_TEMPLATE( LOOP_START_DX10	);
+//	CF_TEMPLATE( LOOP_START_NO_AL	);
 
 	//--------------------------------------------------------------------------
 	//	Export template
@@ -1683,7 +1682,7 @@ architecture R800 Evergreen;
 /*			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr;	*/	\
 			CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_ ## instr;	\
 		end constraints;						\
-	end tuple;									\
+	end tuple									\
 
 	//--------------------------------------------------------------------------
 	//	Export instructions
@@ -1704,7 +1703,7 @@ architecture R800 Evergreen;
 		constraints:							\
 			CF_GWS_WORD0.GWS_OPCODE == instr;	\
 		end constraints;						\
-	end tuple;									\
+	end tuple									\
 
 	//--------------------------------------------------------------------------
 	//	CF GWS instructions
