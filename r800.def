@@ -1648,12 +1648,82 @@ architecture R800 Evergreen;
 		end constraints;						\
 	end tuple;									\
 
+	//--------------------------------------------------------------------------
+	//	CF instructions
+	//--------------------------------------------------------------------------
 	CF_TEMPLATE( CALL				);
 	CF_TEMPLATE( CALL_FS			);
 	CF_TEMPLATE( CUT_VERTEX			);
 	CF_TEMPLATE( ELSE				);
 	CF_TEMPLATE( EMIT_CUT_VERTEX	);
 	CF_TEMPLATE( EMIT_VERTEX		);
+	CF_TEMPLATE( GDS				);
+	CF_TEMPLATE( HALT				);
+	CF_TEMPLATE( JUMP				);
+	CF_TEMPLATE( JUMPTABLE			);	//	FIXME: This is 29 but the doc says 28
+	CF_TEMPLATE( KILL				);
+	CF_TEMPLATE( LOOP_BREAK			);
+	CF_TEMPLATE( LOOP_CONTINUE		);
+	CF_TEMPLATE( LOOP_END			);
+	CF_TEMPLATE( LOOP_START			);
+	CF_TEMPLATE( LOOP_START_DX10	);
+	CF_TEMPLATE( LOOP_START_NO_AL	);
+
+	//--------------------------------------------------------------------------
+	//	Export template
+	//--------------------------------------------------------------------------
+//	FIXME: How to solve that the second microcode can be two type of microcodes
+#define	CF_EXPORT_TEMPLATE( instr )				\
+	tuple instr (64):							\
+		microcode CF_ALLOC_EXPORT_WORD0;		\
+/*		microcode CF_ALLOC_EXPORT_WORD1_BUF;	*/\
+		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	\
+												\
+		constraints:							\
+/*			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr;	*/	\
+			CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple;									\
+
+	//--------------------------------------------------------------------------
+	//	Export instructions
+	//--------------------------------------------------------------------------
+	CF_EXPORT_TEMPLATE( EXPORT		);	//	FIXME:	This value must be 39 by the
+										//			doc but it will be 83
+	CF_EXPORT_TEMPLATE( EXPORT_DONE	);	//	FIXME:	This value must be 40 by the
+										//			doc but it will be 89
+
+	//--------------------------------------------------------------------------
+	//	CF GWS template
+	//--------------------------------------------------------------------------
+#define	CF_GWS_TEMPLATE( instr )				\
+	tuple instr (64):							\
+		microcode CF_GWS_WORD0;					\
+		microcode CF_WORD1;						\
+												\
+		constraints:							\
+			CF_GWS_WORD0.GWS_OPCODE == instr;	\
+		end constraints;						\
+	end tuple;									\
+
+	//--------------------------------------------------------------------------
+	//	CF GWS instructions
+	//--------------------------------------------------------------------------
+	CF_GWS_TEMPLATE( GWS_BARRIER	);
+	
+	tuple GWS_INIT (64):
+		microcode CF_GWS_WORD0;
+		microcode CF_WORD1;
+
+		constraints:
+			CF_GWS_WORD0.GWS_OPCODE == GWS_INIT;
+			CF_WORD1.CF_INST		== CF_INST_GLOBAL_WAVE_SYNC;
+		end constraints;
+	end tuple;
+
+	CF_GWS_TEMPLATE( GWS_SEMA_P		);
+	CF_GWS_TEMPLATE( GWS_SEMA_V		);
+
 
 //==============================================================================
 //	
