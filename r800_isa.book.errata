@@ -20,7 +20,7 @@ page: 9-24 (opcode is wrong)
 	"CF_INST == CF_INST_JUMPTABLE, opcode 28 (0x1D)." CF_INST_JUMPTABLE is 29.
 
 
-page: 9-37 (embarassing typo)
+page: 9-37 (embarrassing typo)
 	"CNDNE_64
 	Compares the src0 with floating-point ero"
 	should be "zero"
@@ -125,7 +125,7 @@ page 10-39 (copy paste)
 	ALU_WORD1_LDS_IDX_OP contains SRC1_SEL [21:13] field. These bits are used by other fields.
 
 page 10-39 (copy paste)
-	ALU_WORD1_LDS_IDX_OP contains SRC0_SEL [8:0] field. This should be SRC2_SEL.0
+	ALU_WORD1_LDS_IDX_OP contains SRC0_SEL [8:0] field. This should be SRC2_SEL.
 
 page 10-40: (inconsistency)
 	ALU_WORD1_LDS_IDX_OP
@@ -141,5 +141,5 @@ page 10-47: (missing enum)
 	instead of explaining the possible values I found this:
 	"See list for DATA_FORMAT [27:22] in VTX_WORD1_GPR, page 10-47, and VTX_WORD1_SEM, page 10-49."
 	Which is a self reference. It also the same on page 10-49.
-	I haven't found any other mention of the DATA_FORMAT. If I want to probram a vertex fetch, then I have to reverse engineer.
-	
+	I haven't found any other mention of the DATA_FORMAT. 
+
