@@ -626,7 +626,7 @@ architecture R800 Evergreen;
 			DS_INST_ATOMIC_ORDERED_ALLOC_RET	63;
 		end enum;
 
-		field SRC0_SEL		(8:0)	SRC_SEL;
+		field SRC2_SEL		(8:0)	SRC_SEL;
 		field SRC2_REL		(9)		BOOL;
 		field SRC2_CHAN		(11:10)	CHAN_SEL;
 		field IDX_OFFSET_1	(12)	BOOL;
@@ -1117,7 +1117,7 @@ architecture R800 Evergreen;
 			CF_INST_MEM_RING2					89;
 			CF_INST_MEM_RING3					90;
 			CF_INST_MEM_EXPORT_COMBINED			91;
-			CF_INST_MEM_RAT_COMBINED_CACHELESS	91;
+			CF_INST_MEM_RAT_COMBINED_CACHELESS	92;
 		end enum;
 	
 		field ARRAY_SIZE(11:0) INT;
@@ -1723,6 +1723,103 @@ architecture R800 Evergreen;
 	CF_GWS_TEMPLATE( GWS_SEMA_P		);
 	CF_GWS_TEMPLATE( GWS_SEMA_V		);
 
+	//--------------------------------------------------------------------------
+	//	Memory Export instructions
+	//--------------------------------------------------------------------------
+//	FIXME: How to solve that the second microcode can be two type of microcodes
+	tuple MEM_EXPORT (64):
+		microcode CF_ALLOC_EXPORT_WORD0;
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;
+/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	*/
+
+		constraints:
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_EXPORT;
+/*			CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_MEM_EXPORT;*/
+/*			option ARRAY_SIZE_MEANS_NOTHING;*/	//	FIXME: ARRAY_SIZE is not used
+		end constraints;
+	end tuple;
+
+	tuple MEM_EXPORT_COMBINED (64):
+		microcode CF_ALLOC_EXPORT_WORD0;
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;
+
+		constraints:
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_EXPORT_COMBINED;
+		end constraints;
+	end tuple;
+
+	//--------------------------------------------------------------------------
+	//	Memory RAT template
+	//--------------------------------------------------------------------------
+#define	MEM_RAT_TEMPLATE( instr )				\
+	tuple instr (64):							\
+		microcode CF_ALLOC_EXPORT_WORD0_RAT;	\
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;	\
+												\
+		constraints:							\
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	Memory RAT instructions
+	//--------------------------------------------------------------------------
+	MEM_RAT_TEMPLATE( MEM_RAT						);
+	MEM_RAT_TEMPLATE( MEM_RAT_CACHELESS				);
+	MEM_RAT_TEMPLATE( MEM_RAT_COMBINED_CACHELESS	);
+
+	//--------------------------------------------------------------------------
+	//	Memory template
+	//--------------------------------------------------------------------------
+#define	MEM_TEMPLATE( instr )					\
+	tuple instr (64):							\
+		microcode CF_ALLOC_EXPORT_WORD0;		\
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;	/*FIXME: Doc says SWIZ*/	\
+												\
+		constraints:							\
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	Memory instructions
+	//--------------------------------------------------------------------------
+	MEM_TEMPLATE( MEM_RING	);
+	MEM_TEMPLATE( MEM_RING1	);
+	MEM_TEMPLATE( MEM_RING2	);
+	MEM_TEMPLATE( MEM_RING3	);
+
+	MEM_TEMPLATE( MEM_STREAM0_BUF0	);
+	MEM_TEMPLATE( MEM_STREAM0_BUF1	);
+	MEM_TEMPLATE( MEM_STREAM0_BUF2	);
+	MEM_TEMPLATE( MEM_STREAM0_BUF3	);
+	MEM_TEMPLATE( MEM_STREAM1_BUF0	);
+	MEM_TEMPLATE( MEM_STREAM1_BUF1	);
+	MEM_TEMPLATE( MEM_STREAM1_BUF2	);
+	MEM_TEMPLATE( MEM_STREAM1_BUF3	);
+	MEM_TEMPLATE( MEM_STREAM2_BUF0	);
+	MEM_TEMPLATE( MEM_STREAM2_BUF1	);
+	MEM_TEMPLATE( MEM_STREAM2_BUF2	);
+	MEM_TEMPLATE( MEM_STREAM2_BUF3	);
+	MEM_TEMPLATE( MEM_STREAM3_BUF0	);
+	MEM_TEMPLATE( MEM_STREAM3_BUF1	);
+	MEM_TEMPLATE( MEM_STREAM3_BUF2	);
+	MEM_TEMPLATE( MEM_STREAM3_BUF3	);
+
+	//--------------------------------------------------------------------------
+	//	Memory scratch instruction
+	//--------------------------------------------------------------------------
+//	FIXME: How to solve that the second microcode can be two type of microcodes
+	tuple MEM_WR_SCRATCH (64):
+		microcode CF_ALLOC_EXPORT_WORD0;
+		microcode CF_ALLOC_EXPORT_WORD1_BUF;
+/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	*/
+
+		constraints:
+			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_WR_SCRATCH;
+/*			CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_MEM_SCRATCH;*/
+		end constraints;
+	end tuple;
 
 //==============================================================================
 //	
@@ -1816,15 +1913,6 @@ architecture R800 Evergreen;
 		option COND_MEANS_NOTHING;
 		constraints:
 			CF_WORD1.CF_INST == CF_INST_NOP;
-		end constraints;
-	end tuple;
-	
-	tuple MEM_RAT_CACHELESS(64):
-		microcode CF_ALLOC_EXPORT_WORD0_RAT;
-		microcode CF_ALLOC_EXPORT_WORD1_BUF;
-		
-		constraints:
-			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_RAT_CACHELESS;
 		end constraints;
 	end tuple;
 	

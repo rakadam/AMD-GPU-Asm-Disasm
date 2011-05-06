@@ -11,16 +11,9 @@ inconsistency through the whole pdf:
 page: 9-15 (opcode is wrong)
 	"CF_INST == CF_INST_EXPORT, opcode 39 (0x27)." CF_ALLOC_EXPORT_WORD1_SWIZ  CF_INST_EXPORT has value 83 and not 39.
 
-page: 9-15 (missing field)
-	EXPORT instruction second microcode can be CF_ALLOC_EXPORT_WORD1_BUF and CF_ALLOC_EXPORT_WORD1_SWIZ, as well. Both microcodes have CF_INST field but only in CF_ALLOC_EXPORT_WORD1_SWIZ have CF_INST_EXPORT value. CF_INST field in CF_ALLOC_EXPORT_WORD1_BUF microcode has only CF_INST_MEM_EXPORT value.
-
 
 page: 9-16 (opcode is wrong)
 	"CF_INST == CF_INST_EXPORT_DONE, opcode 40 (0x28)." CF_ALLOC_EXPORT_WORD1_SWIZ  CF_INST_EXPORT_DONE has value 84 and not 40.
-
-page: 9-16 (missing field)
-	Same as at page 9-15.
-	EXPORT instruction second microcode can be CF_ALLOC_EXPORT_WORD1_BUF and CF_ALLOC_EXPORT_WORD1_SWIZ, as well. Both microcodes have CF_INST field but only in CF_ALLOC_EXPORT_WORD1_SWIZ have CF_INST_EXPORT value. CF_INST field in CF_ALLOC_EXPORT_WORD1_BUF microcode has only CF_INST_MEM_EXPORT value.
 
 
 page: 9-24 (opcode is wrong)
@@ -55,6 +48,15 @@ page: 9-35 (order of the dwords is mixed up)
 	The ordering is consistently wrong on the figure depicting binary structure of the words too. 
 
 	I haven't tested it, but it might be the case with page: 9-34 (MEM_RAT) and page 9-36 (MEM_RAT_COMBINED_CACHELESS)
+
+
+page: 9-37 (inconsistency)
+	MEM_RING* instructions contains CF_ALLOC_EXPORT_WORD1_SWIZ microcode. It has CF_INST field but it doesn't contain the CF_INST_MEM_RING* values. CF_ALLOC_EXPORT_WORD1_BUF has the CF_INST field which contains these values.
+
+
+page: 9-39 (inconsistency)
+	CF_ALLOC_EXPORT_WORD1_BUF has CF_INST field but it hasn't CF_INST_MEM_SCRATCH only CF_INST_MEM_WR_SCRATCH and it has a value 80 and not 36.
+
 
 page: 9-131 (opcode is wrong)
 	"LSHR_INT
@@ -121,6 +123,9 @@ page 10-38 (minor typo)
 
 page 10-39 (copy paste)
 	ALU_WORD1_LDS_IDX_OP contains SRC1_SEL [21:13] field. These bits are used by other fields.
+
+page 10-39 (copy paste)
+	ALU_WORD1_LDS_IDX_OP contains SRC0_SEL [8:0] field. This should be SRC2_SEL.0
 
 page 10-40: (inconsistency)
 	ALU_WORD1_LDS_IDX_OP
