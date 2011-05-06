@@ -397,8 +397,8 @@ architecture R800 Evergreen;
 			OP3_INST_CNDGT					26;
 			OP3_INST_CNDGE					27;
 			OP3_INST_CNDE_INT				28;
-			OP3_INST_CMNDGT_INT				29;
-			OP3_INST_CMNDGE_INT				30;
+			OP3_INST_CNDGT_INT				29;
+			OP3_INST_CNDGE_INT				30;
 			OP3_INST_MUL_LIT				31;
 		end enum;
 
@@ -1835,7 +1835,7 @@ architecture R800 Evergreen;
 	end tuple
 
 	//--------------------------------------------------------------------------
-	//	CF Operations instruction
+	//	CF Operations instructions
 	//--------------------------------------------------------------------------
 //	CF_OP_TEMPLATE( NOP		);
 	CF_OP_TEMPLATE( POP		);
@@ -1845,7 +1845,323 @@ architecture R800 Evergreen;
 	CF_OP_TEMPLATE( TC_ACK	);
 //	CF_OP_TEMPLATE( VC		);
 	CF_OP_TEMPLATE( VC_ACK	);
-//	CF_OP_TEMPLATE( WAIT_ACK	);
+//	CF_OP_TEMPLATE( WAIT_ACK);
+
+
+//==============================================================================
+//	ALU Instructions
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	ALU Operations template
+	//--------------------------------------------------------------------------
+#define	ALU_OP_TEMPLATE( instr )				\
+	tuple instr (64):							\
+		microcode ALU_WORD0;					\
+		microcode ALU_WORD1_OP2;				\
+												\
+		constraints:							\
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	ALU Operations instructions
+	//--------------------------------------------------------------------------
+	ALU_OP_TEMPLATE( ADD				);
+	ALU_OP_TEMPLATE( ADD_64				);
+//	ALU_OP_TEMPLATE( ADD_INT			);
+	ALU_OP_TEMPLATE( ADD_PREV			);
+	ALU_OP_TEMPLATE( ADDC_UINT			);
+//	ALU_OP_TEMPLATE( AND_INT			);
+//	ALU_OP_TEMPLATE( ASHR_INT			);
+	ALU_OP_TEMPLATE( BCNT_ACCUM_PREV_INT);
+	ALU_OP_TEMPLATE( BCNT_INT			);
+	ALU_OP_TEMPLATE( BFM_INT			);
+	ALU_OP_TEMPLATE( BFREV_INT			);
+	ALU_OP_TEMPLATE( CEIL				);
+	ALU_OP_TEMPLATE( COS				);
+	ALU_OP_TEMPLATE( CUBE				);
+	ALU_OP_TEMPLATE( DOT				);
+	ALU_OP_TEMPLATE( DOT_IEEE			);
+	ALU_OP_TEMPLATE( DOT4				);
+	ALU_OP_TEMPLATE( DOT4_IEEE			);
+	ALU_OP_TEMPLATE( EXP_IEEE			);
+	ALU_OP_TEMPLATE( FFBH_INT			);
+	ALU_OP_TEMPLATE( FFBH_UINT			);
+	ALU_OP_TEMPLATE( FFBL_INT			);
+	ALU_OP_TEMPLATE( FLOOR				);
+	ALU_OP_TEMPLATE( FLT_TO_INT			);
+	ALU_OP_TEMPLATE( FLT_TO_INT_FLOOR	);
+	ALU_OP_TEMPLATE( FLT_TO_INT_RPI		);
+	ALU_OP_TEMPLATE( FLT_TO_UINT		);
+	ALU_OP_TEMPLATE( FLT_TO_UINT4		);
+	ALU_OP_TEMPLATE( FLT16_TO_FLT32		);
+	ALU_OP_TEMPLATE( FLT32_TO_FLT16		);
+	ALU_OP_TEMPLATE( FRACT				);
+	ALU_OP_TEMPLATE( FRACT_64			);
+	ALU_OP_TEMPLATE( FREXP_64			);
+//	ALU_OP_TEMPLATE( GROUP_BARRIER		);
+	ALU_OP_TEMPLATE( GROUP_SEQ_BEGIN	);
+	ALU_OP_TEMPLATE( GROUP_SEQ_END		);
+	ALU_OP_TEMPLATE( INT_TO_FLT			);
+	ALU_OP_TEMPLATE( INTERP_LOAD_P0		);
+	ALU_OP_TEMPLATE( INTERP_LOAD_P10	);
+	ALU_OP_TEMPLATE( INTERP_LOAD_P20	);
+	ALU_OP_TEMPLATE( INTERP_X			);
+	ALU_OP_TEMPLATE( INTERP_XY			);
+	ALU_OP_TEMPLATE( INTERP_Z			);
+	ALU_OP_TEMPLATE( INTERP_ZW			);
+	ALU_OP_TEMPLATE( KILLE				);
+	ALU_OP_TEMPLATE( KILLE_INT			);
+	ALU_OP_TEMPLATE( KILLGE				);
+	ALU_OP_TEMPLATE( KILLGE_INT			);
+	ALU_OP_TEMPLATE( KILLGE_UINT		);
+	ALU_OP_TEMPLATE( KILLGT				);
+	ALU_OP_TEMPLATE( KILLGT_INT			);
+	ALU_OP_TEMPLATE( KILLGT_UINT		);
+	ALU_OP_TEMPLATE( KILLNE				);
+	ALU_OP_TEMPLATE( KILLNE_INT			);
+	ALU_OP_TEMPLATE( LDEXP_64			);
+	ALU_OP_TEMPLATE( LOAD_STORE_FLAGS	);
+	ALU_OP_TEMPLATE( LOG_CLAMPED		);
+	ALU_OP_TEMPLATE( LOG_IEEE			);
+//	ALU_OP_TEMPLATE( LSHL_INT			);
+//	ALU_OP_TEMPLATE( LSHR_INT			);
+	ALU_OP_TEMPLATE( MAX				);
+	ALU_OP_TEMPLATE( MAX_64				);
+	ALU_OP_TEMPLATE( MAX_DX10			);
+	ALU_OP_TEMPLATE( MAX_INT			);
+	ALU_OP_TEMPLATE( MAX_UINT			);
+	ALU_OP_TEMPLATE( MAX4				);
+	ALU_OP_TEMPLATE( MBCNT_32HI_INT		);
+	ALU_OP_TEMPLATE( MBCNT_32LO_ACCUM_PREV_INT		);
+	ALU_OP_TEMPLATE( MIN				);
+	ALU_OP_TEMPLATE( MIN_64				);
+	ALU_OP_TEMPLATE( MIN_DX10			);
+	ALU_OP_TEMPLATE( MIN_INT			);
+	ALU_OP_TEMPLATE( MIN_UINT			);
+	ALU_OP_TEMPLATE( MOV				);
+	ALU_OP_TEMPLATE( MOVA_INT			);
+	ALU_OP_TEMPLATE( MUL				);
+	ALU_OP_TEMPLATE( MUL_IEEE			);
+	ALU_OP_TEMPLATE( MUL_IEEE_PREV		);
+	ALU_OP_TEMPLATE( MUL_PREV			);
+	ALU_OP_TEMPLATE( MUL_UINT24			);
+	ALU_OP_TEMPLATE( MULADD_IEEE_PREV	);
+	ALU_OP_TEMPLATE( MULADD_PREV		);
+	ALU_OP_TEMPLATE( MULHI_INT			);
+	ALU_OP_TEMPLATE( MULHI_UINT			);
+	ALU_OP_TEMPLATE( MULHI_UINT24		);
+	ALU_OP_TEMPLATE( MULLO_INT			);
+	ALU_OP_TEMPLATE( MULLO_UINT			);
+//	ALU_OP_TEMPLATE( NOP				);	//	FIXME:	This must be existed. But CF NOP is already defined.
+	ALU_OP_TEMPLATE( NOT_INT			);
+	ALU_OP_TEMPLATE( OFFSET_TO_FLT		);
+	ALU_OP_TEMPLATE( OR_INT				);
+	ALU_OP_TEMPLATE( PRED_SET_CLR		);
+	ALU_OP_TEMPLATE( PRED_SET_INV		);
+	ALU_OP_TEMPLATE( PRED_SET_POP		);
+	ALU_OP_TEMPLATE( PRED_SET_RESTORE	);
+	ALU_OP_TEMPLATE( PRED_SETE			);
+	ALU_OP_TEMPLATE( PRED_SETE_64		);
+	ALU_OP_TEMPLATE( PREDE_INT			);
+	ALU_OP_TEMPLATE( PRED_SETE_PUSH		);
+	ALU_OP_TEMPLATE( PRED_SETE_PUSH_INT	);
+	ALU_OP_TEMPLATE( PRED_SETGE			);
+	ALU_OP_TEMPLATE( PRED_SETGE_64		);
+	ALU_OP_TEMPLATE( PRED_SETGE_INT		);
+	ALU_OP_TEMPLATE( PRED_SETGE_PUSH	);
+	ALU_OP_TEMPLATE( PRED_SETGE_PUSH_INT);
+	ALU_OP_TEMPLATE( PRED_SETGE_UINT	);
+	ALU_OP_TEMPLATE( PRED_SETGT			);
+	ALU_OP_TEMPLATE( PRED_SETGT_64		);
+	ALU_OP_TEMPLATE( PRED_SETGT_INT		);
+	ALU_OP_TEMPLATE( PRED_SETGT_PUSH	);
+	ALU_OP_TEMPLATE( PRED_SETGT_PUSH_INT);
+	ALU_OP_TEMPLATE( PRED_SETGT_UINT	);
+	ALU_OP_TEMPLATE( PRED_SETLE_PUSH_INT);
+	ALU_OP_TEMPLATE( PRED_SETLT_PUSH_INT);
+	ALU_OP_TEMPLATE( PRED_SETNE			);
+	ALU_OP_TEMPLATE( PRED_SETNE_INT		);
+	ALU_OP_TEMPLATE( PRED_SETNE_PUSH	);
+	ALU_OP_TEMPLATE( PRED_SETNE_PUSH_INT);
+	ALU_OP_TEMPLATE( RECIP_64			);
+	ALU_OP_TEMPLATE( RECIP_CLAMPED		);
+	ALU_OP_TEMPLATE( RECIP_CLAMPED_64	);
+	ALU_OP_TEMPLATE( RECIP_FF			);
+	ALU_OP_TEMPLATE( RECIP_IEEE			);
+	ALU_OP_TEMPLATE( RECIP_INT			);
+	ALU_OP_TEMPLATE( RECIP_UINT			);
+	ALU_OP_TEMPLATE( RECIPSQRT_64		);
+	ALU_OP_TEMPLATE( RECIPSQRT_CLAMPED	);
+	ALU_OP_TEMPLATE( RECIPSQRT_CLAMPED_64	);
+	ALU_OP_TEMPLATE( RECIPSQRT_FF		);
+	ALU_OP_TEMPLATE( RECIPSQRT_IEEE		);
+	ALU_OP_TEMPLATE( RNDNE				);
+	ALU_OP_TEMPLATE( SAD_ACCUM_PREV_UINT);
+	ALU_OP_TEMPLATE( SET_CF_IDX0		);
+	ALU_OP_TEMPLATE( SET_CF_IDX1		);
+	ALU_OP_TEMPLATE( SET_LDS_SIZE		);
+	ALU_OP_TEMPLATE( SET_MODE			);
+	ALU_OP_TEMPLATE( SETE				);
+	ALU_OP_TEMPLATE( SETE_64			);
+	ALU_OP_TEMPLATE( SETE_DX10			);
+	ALU_OP_TEMPLATE( SETE_INT			);
+	ALU_OP_TEMPLATE( SETGE				);
+	ALU_OP_TEMPLATE( SETGE_64			);
+	ALU_OP_TEMPLATE( SETGE_DX10			);
+	ALU_OP_TEMPLATE( SETGE_INT			);
+	ALU_OP_TEMPLATE( SETGE_UINT			);
+	ALU_OP_TEMPLATE( SETGT				);
+	ALU_OP_TEMPLATE( SETGT_64			);
+	ALU_OP_TEMPLATE( SETGT_DX10			);
+	ALU_OP_TEMPLATE( SETGT_INT			);
+	ALU_OP_TEMPLATE( SETGT_UINT			);
+	ALU_OP_TEMPLATE( SETNE				);
+	ALU_OP_TEMPLATE( SETNE_64			);
+	ALU_OP_TEMPLATE( SETNE_DX10			);
+	ALU_OP_TEMPLATE( SETNE_INT			);
+	ALU_OP_TEMPLATE( SIN				);
+	ALU_OP_TEMPLATE( SQRT_64			);
+	ALU_OP_TEMPLATE( SQRT_IEEE			);
+	ALU_OP_TEMPLATE( STORE_FLAGS		);
+	ALU_OP_TEMPLATE( SUB_INT			);
+	ALU_OP_TEMPLATE( SUBB_UINT			);
+	ALU_OP_TEMPLATE( TRUNC				);
+	ALU_OP_TEMPLATE( UBYTE0_FLT			);
+	ALU_OP_TEMPLATE( UBYTE1_FLT			);
+	ALU_OP_TEMPLATE( UBYTE2_FLT			);
+	ALU_OP_TEMPLATE( UBYTE3_FLT			);
+	ALU_OP_TEMPLATE( UINT_TO_FLT		);
+	ALU_OP_TEMPLATE( XOR_INT			);
+
+
+	//--------------------------------------------------------------------------
+	//	More ALU Operations template
+	//--------------------------------------------------------------------------
+	//	FIXME: how to create logical OR between constraints???
+#define	ALU_MORE_OP_TEMPLATE( instr, x, y )		\
+	tuple instr (64):							\
+		microcode ALU_WORD0;					\
+		microcode ALU_WORD1_OP2;				\
+												\
+		constraints:							\
+/*			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr ## _ ## x or*/	\
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr ## _ ## y;		\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	More ALU Operations instructions
+	//--------------------------------------------------------------------------
+	ALU_MORE_OP_TEMPLATE( FLT32_TO_FLT64, S, V	);
+	ALU_MORE_OP_TEMPLATE( FLT64_TO_FLT32, S, V	);
+	ALU_MORE_OP_TEMPLATE( MUL_64		, S, V	);
+
+	//--------------------------------------------------------------------------
+	//	ALU Operations 3 template
+	//--------------------------------------------------------------------------
+#define	ALU_OP3_TEMPLATE( instr )				\
+	tuple instr (64):							\
+		microcode ALU_WORD0;					\
+		microcode ALU_WORD1_OP3;				\
+												\
+		constraints:							\
+			ALU_WORD1_OP3.ALU_INST == OP3_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	ALU Operations 3 instructions
+	//--------------------------------------------------------------------------
+	ALU_OP3_TEMPLATE( BFE_INT			);
+	ALU_OP3_TEMPLATE( BFE_UINT			);
+	ALU_OP3_TEMPLATE( BFI_INT			);
+	ALU_OP3_TEMPLATE( BIT_ALIGN_INT		);
+	ALU_OP3_TEMPLATE( BYTE_ALIGN_INT	);
+	ALU_OP3_TEMPLATE( CNDE				);
+	ALU_OP3_TEMPLATE( CNDE_INT			);
+	ALU_OP3_TEMPLATE( CNDGE				);
+	ALU_OP3_TEMPLATE( CNDGE_INT			);
+	ALU_OP3_TEMPLATE( CNDGT				);
+	ALU_OP3_TEMPLATE( CNDGT_INT			);
+	ALU_OP3_TEMPLATE( CNDNE_64			);
+	ALU_OP3_TEMPLATE( FMA				);
+	ALU_OP3_TEMPLATE( FMA_64			);
+	ALU_OP3_TEMPLATE( LERP_UINT			);
+	ALU_OP3_TEMPLATE( MUL_LIT			);
+	ALU_OP3_TEMPLATE( MULADD			);
+	ALU_OP3_TEMPLATE( MULADD_D2			);
+	ALU_OP3_TEMPLATE( MULADD_IEEE		);
+	ALU_OP3_TEMPLATE( MULADD_M2			);
+	ALU_OP3_TEMPLATE( MULADD_M4			);
+	ALU_OP3_TEMPLATE( MULADD_UINT24		);
+	ALU_OP3_TEMPLATE( SAD_ACCUM_HI_UINT	);
+	ALU_OP3_TEMPLATE( SAD_ACCUM_UINT	);
+
+
+//==============================================================================
+//	Instructions for Fetches Through a Vertex Cache Clause
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	FTVCC template
+	//--------------------------------------------------------------------------
+#define	FTVCC_TEMPLATE( instr )					\
+	tuple instr (128):							\
+		microcode VTX_WORD0;					\
+		microcode VTX_WORD1_GPR;				\
+		microcode VTX_WORD2;					\
+		microcode padding_32;					\
+												\
+		constraints:							\
+			VTX_WORD0.VC_INST == VC_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	FTVCC instructions
+	//--------------------------------------------------------------------------
+//	FTVCC_TEMPLATE( FETCH				);
+	FTVCC_TEMPLATE( GET_BUFFER_RESINFO	);
+
+	tuple SEMANTIC (128):
+		microcode VTX_WORD0;
+		microcode VTX_WORD1_SEM;
+		microcode VTX_WORD2;
+		microcode padding_32;
+
+		constraints:
+			VTX_WORD0.VC_INST == VC_INST_SEMANTIC;
+		end constraints;
+	end tuple;
+
+
+//==============================================================================
+//	Instructions for Fetches Through a Texture Cache Clause
+//==============================================================================
+
+	//--------------------------------------------------------------------------
+	//	FTTCC template
+	//--------------------------------------------------------------------------
+#define	FTTCC_TEMPLATE( instr )					\
+	tuple instr (128):							\
+		microcode TEX_WORD0;					\
+		microcode TEX_WORD1;					\
+		microcode TEX_WORD2;					\
+		microcode padding_32;					\
+												\
+		constraints:							\
+			TEX_WORD0.TEX_INST == TEX_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	FTVCC instructions
+	//--------------------------------------------------------------------------
+	FTTCC_TEMPLATE( GATHER4			);
+
 
 //==============================================================================
 //	

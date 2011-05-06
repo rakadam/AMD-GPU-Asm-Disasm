@@ -58,12 +58,220 @@ page: 9-39 (inconsistency)
 	CF_ALLOC_EXPORT_WORD1_BUF has CF_INST field but it hasn't CF_INST_MEM_SCRATCH only CF_INST_MEM_WR_SCRATCH and it has a value 80 and not 36.
 
 
+page: 9-56 (opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_ASHR_INT, opcode 112 (0x70)" OP2_INST_ASHR_INT has value 21.
+
+
+page: 9-57 (inconsistency)
+	"Instructions BCNT_ACCUM_PREV_INT"
+	"Instruction Field ALU_INST == OP2_INST_EXP_IEEE, opcode 182 (0xB6)." OP2_INST_BCNT_ACCUM_PREV_INT should be at the equality investigation.
+
+
+#page: 9-67	(inconsistency)
+#	"Instructions CNDE"
+#	"Instruction Field ALU_INST == OP3_INST_CMOVE, opcode 24 (0x18)." OP3_INST_CNDE should be at the equality investigation and its value is 25.
+
+
+#page: 9-68	(inconsistency)
+#	"Instructions CNDE_INT"
+#	"Instruction Field ALU_INST == OP3_INST_CMOVE_INT, opcode 28 (0x1C)." OP3_INST_CNDE_INT should be at the equality investigation but its value is really 28.
+
+
+page: 9-69	(inconsistency)
+	"Instructions CNDGE"
+	"Instruction Field ALU_INST == OP3_INST_CMOVGE, opcode 26 (0x1A)." OP3_INST_CNDGE should be at the equality investigation and its value is 27.
+
+
+page: 9-70	(inconsistency)
+	"Instructions CNDGE_INT"
+	"Instruction Field ALU_INST == OP3_INST_CMOVGE_INT, opcode 30 (0x1E)." OP3_INST_CNDGE_INT should be at the equality investigation but its value is really 30.
+
+
+page: 9-71	(inconsistency)
+	"Instructions CNDGT"
+	"Instruction Field ALU_INST == OP3_INST_CMOVGT, opcode 25 (0x19)." OP3_INST_CNDGT should be at the equality investigation and its value is 26.
+
+
+page: 9-72	(inconsistency)
+	"Instructions CNDGT_INT"
+	"Instruction Field ALU_INST == OP3_INST_CMOVGT_INT, opcode 29 (0x1D)." OP3_INST_CNDGT_INT should be at the equality investigation but its value is really 29.
+
+
+page: 9-74	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_COS, opcode 111 (0x6F)." Its opcode is 142.
+
+
+page: 9-75	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_CUBE, opcode 82 (0x52)." Its opcode is 192.
+
+
+page: 9-78	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_DOT4, opcode 80 (0x50)." Its opcode is 190.
+
+
+page: 9-79	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_DOT4_IEEE, opcode 81 (0x51)." Its opcode is 191.
+
+
+page: 9-80	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_EXP_IEEE, opcode 97 (0x61)." Its opcode is 129.
+
+
+page: 9-85	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_FLT_TO_INT, opcode 107 (0x6B)." Its opcode is 80.
+
+
+page: 9-100	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_FRACT_64, opcode 123 (0x7B)." Its opcode is 198.
+
+
+page: 9-102	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_FREXP_64, opcode 7 (0x7)." Its opcode is 196.
+
+
+page: 9-106	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_INT_TO_FLT, opcode 108 (0x6C)." Its opcode is 155.
+
+
+page: 9-118	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_KILLGE_UINT, opcode 56 (0x38)." Its opcode is 65.
+
+
+page: 9-125	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_LDEXP_64, opcode 122 (0x7A)." Its opcode is 197.
+
+
+page: 9-125	(copy paste)
+	"Format ALU_WORD0 (page 10-23) and ALU_WORD1_OP3 (page 10-32)." The second microcode is ALU_WORD1_OP2.
+
+
+page: 9-128	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_LOG_CLAMPED, opcode 98 (0x62)." Its opcode is 130.
+
+
+page: 9-129	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_LOG_IEEE, opcode 99 (0x63)." Its opcode is 131.
+
+
+page: 9-130	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_LSHL_INT, opcode 114 (0x72)." Its opcode is 23.
+
+
 page: 9-131 (opcode is wrong)
 	"LSHR_INT
 	ALU_INST == OP2_INST_LSHR_INT, opcode 113 (0x71)"
 	but according to page 10-28 (ALU_WORD1_OP2) the opcode 113 is reserved and OP2_INST_LSHR_INT is 22
 
-  ASHR_INT and LSHR_INT shares a similar problem
+  ASHR_INT and LSHL_INT shares a similar problem
+
+
+page: 9-137	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MAX4, opcode 83 (0x53)." Its opcode is 193.
+
+
+page: 9-146	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MOVA_INT, opcode 24 (0x18)." Its opcode is 204.
+
+
+page: 9-152	(copy paste)
+	"Format ALU_WORD0 (page 10-23) and ALU_WORD1_OP2 (page 10-26)." The second microcode is ALU_WORD1_OP3.
+
+
+page: 9-155	(opcode is wrong)
+	"Instruction Field ALU_INST == OP3_INST_MULADD, opcode 16 (0x10)." Its opcode is 20.
+
+
+page: 9-156	(opcode is wrong)
+	"Instruction Field ALU_INST == OP3_INST_MULADD_D2, opcode 19 (0x13)." Its opcode is 23.
+
+
+page: 9-157	(opcode is wrong)
+	"Instruction Field ALU_INST == OP3_INST_MULADD_IEEE, opcode 20 (0x14)." Its opcode is 24.
+
+
+page: 9-159	(opcode is wrong)
+	"Instruction Field ALU_INST == OP3_INST_MULADD_M2, opcode 17 (0x11)." Its opcode is 21.
+
+
+page: 9-160	(opcode is wrong)
+	"Instruction Field ALU_INST == OP3_INST_MULADD_M4, opcode 18 (0x12)." Its opcode is 22.
+
+
+page: 9-163	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MULHI_INT, opcode 116 (0x74)." Its opcode is 144.
+
+
+page: 9-164	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MULHI_UINT, opcode 118 (0x76)." Its opcode is 146.
+	
+
+page: 9-166	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MULLO_INT, opcode 115 (0x73)." Its opcode is 143.
+
+
+page: 9-167	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_MULLO_UINT, opcode 117 (0x75)." Its opcode is 145.
+
+
+page: 9-168	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_NOP, opcode 0 (0x1A)." Its opcode is 26.
+
+
+page: 9-178	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_PRED_SETE_64, opcode 125 (0x7D)." Its opcode is 200.
+
+
+page: 9-184	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_PRED_SETGE_64, opcode 126 (0x7E)." Its opcode is 201.
+
+
+page: 9-192	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_PRED_SETGT_64, opcode 124 (0x7C)." Its opcode is 199.
+
+
+page: 9-204	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIP_CLAMPED, opcode 100 (0x64)." Its opcode is 132.
+
+
+page: 9-206	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIP_FF, opcode 101 (0x65)." Its opcode is 133.
+
+
+page: 9-207	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIP_IEEE, opcode 102 (0x66)." Its opcode is 134.
+
+
+page: 9-208	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIP_INT, opcode 119 (0x77)." Its opcode is 147.
+
+
+page: 9-209	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIP_UINT, opcode 120 (0x78)." Its opcode is 148.
+
+
+page: 9-211	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIPSQRT_CLAMPED, opcode 103 (0x67)." Its opcode is 135.
+
+
+page: 9-213	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIPSQRT_FF, opcode 104 (0x68)." Its opcode is 136.
+
+
+page: 9-214	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_RECIPSQRT_IEEE, opcode 105 (0x69)." Its opcode is 137.
+
+
+page: 9-241	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_SIN, opcode 110 (0x6E)." Its opcode is 141.
+
+
+page: 9-243	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_SQRT_IEEE, opcode 106 (0x6A)." Its opcode is 138.
+
+
+page: 9-249	(opcode is wrong)
+	"Instruction Field ALU_INST == OP2_INST_UINT_TO_FLT, opcode 109 (0x6D)." Its opcode is 156.
+
 
 page: 9-67 (opcode is wrong)
 	CNDE
@@ -117,6 +325,9 @@ page: 10-27 (inconsistency)
 	definition of ALU_WORD1_OP2
 	"Gaps in opcode values are not marked in the list below." -> They are sometimes marked but why then?
 	on page 10-29: "129 to 95 are for transcendental units only." only 129 is a valid opcode the other are reserved, it should have been: 129 to 156" or "129 to 159" (like it was noted on page 10-27)
+
+page: 10-34 (misspelling)
+	OP3_INST_CMNDGT_INT and OP3_INST_CMNDGE_INT should be OP3_INST_CNDGT_INT and OP3_INST_CNDGT_INT. So without letter M after letter C.
 
 page 10-38 (minor typo)
 	"ALU_WORD0_LDS_iDX_OP" should be ALU_WORD0_LDS_IDX_OP
