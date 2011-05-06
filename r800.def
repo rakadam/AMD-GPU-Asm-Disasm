@@ -1821,6 +1821,32 @@ architecture R800 Evergreen;
 		end constraints;
 	end tuple;
 
+	//--------------------------------------------------------------------------
+	//	CF Operations template
+	//--------------------------------------------------------------------------
+#define	CF_OP_TEMPLATE( instr )					\
+	tuple instr (64):							\
+		microcode CF_WORD0;						\
+		microcode CF_WORD1;						\
+												\
+		constraints:							\
+			CF_WORD1.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	CF Operations instruction
+	//--------------------------------------------------------------------------
+//	CF_OP_TEMPLATE( NOP		);
+	CF_OP_TEMPLATE( POP		);
+	CF_OP_TEMPLATE( PUSH	);
+	CF_OP_TEMPLATE( RETURN	);
+//	CF_OP_TEMPLATE( TC		);
+	CF_OP_TEMPLATE( TC_ACK	);
+//	CF_OP_TEMPLATE( VC		);
+	CF_OP_TEMPLATE( VC_ACK	);
+//	CF_OP_TEMPLATE( WAIT_ACK	);
+
 //==============================================================================
 //	
 //==============================================================================
