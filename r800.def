@@ -2160,7 +2160,49 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	FTVCC instructions
 	//--------------------------------------------------------------------------
-	FTTCC_TEMPLATE( GATHER4			);
+	FTTCC_TEMPLATE( GATHER4					);
+	FTTCC_TEMPLATE( GATHER4_C				);
+	FTTCC_TEMPLATE( GATHER4_C_O				);
+	FTTCC_TEMPLATE( GATHER4_O				);
+	FTTCC_TEMPLATE( GET_GRADIENTS_H			);
+	FTTCC_TEMPLATE( GET_GRADIENTS_V			);
+	FTTCC_TEMPLATE( GET_COMP_TEX_LOD		);	//	FIXME:	The instruction name and opcode name differs
+	FTTCC_TEMPLATE( GET_NUMBER_OF_SAMPLES	);
+	FTTCC_TEMPLATE(	GET_TEXTURE_RESINFO		);
+	FTTCC_TEMPLATE(	KEEP_GRADIENTS			);
+	FTTCC_TEMPLATE( LD						);
+	FTTCC_TEMPLATE( SAMPLE					);
+	FTTCC_TEMPLATE( SAMPLE_C				);
+	FTTCC_TEMPLATE( SAMPLE_C_G				);
+	FTTCC_TEMPLATE( SAMPLE_C_G_LB			);
+	FTTCC_TEMPLATE( SAMPLE_C_L				);
+	FTTCC_TEMPLATE( SAMPLE_C_LB				);
+	FTTCC_TEMPLATE( SAMPLE_C_LZ				);
+	FTTCC_TEMPLATE( SAMPLE_G				);
+	FTTCC_TEMPLATE( SAMPLE_G_LB				);
+	FTTCC_TEMPLATE( SAMPLE_L				);
+	FTTCC_TEMPLATE( SAMPLE_LB				);
+	FTTCC_TEMPLATE( SAMPLE_LZ				);
+	FTTCC_TEMPLATE( SET_GRADIENTS_H			);
+	FTTCC_TEMPLATE( SET_GRADIENTS_V			);
+
+	//--------------------------------------------------------------------------
+	//	FTTCC64 template
+	//--------------------------------------------------------------------------
+#define	FTTCC64_TEMPLATE( instr )					\
+	tuple instr (64):							\
+		microcode TEX_WORD0;					\
+		microcode TEX_WORD1;					\
+												\
+		constraints:							\
+			TEX_WORD0.TEX_INST == TEX_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	FTVCC instruction
+	//--------------------------------------------------------------------------
+	FTTCC64_TEMPLATE( SET_TEXTURE_OFFSETS	);
 
 
 //==============================================================================

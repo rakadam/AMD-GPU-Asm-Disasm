@@ -273,6 +273,14 @@ page: 9-249	(opcode is wrong)
 	"Instruction Field ALU_INST == OP2_INST_UINT_TO_FLT, opcode 109 (0x6D)." Its opcode is 156.
 
 
+page: 9-261	(instruction name is wrong)
+	"Instruction Field TEX_INST == TEX_INST_GET_LERP_FACTORS, opcode 5 (0x5)." Its opcode is 5. This is good but the name should be TEX_INST_GET_NUMBER_OF_SAMPLES.
+
+
+page: 9-279	(instruction name is wrong)
+	"Instruction Field TEX_INST == TEX_INST_SET_TCTURE_OFFSETS, opcode 9 (0x9)." Its opcode is 9. This is good but the name should be TEX_INST_SET_TEXTURE_OFFSETS.
+
+
 page: 9-67 (opcode is wrong)
 	CNDE
 	opcode 24 is written here
