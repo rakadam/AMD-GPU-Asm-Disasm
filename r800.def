@@ -2244,7 +2244,7 @@ architecture R800 Evergreen;
 												\
 		constraints:							\
 			MEM_GDS_WORD0.MEM_INST == MEM_INST_MEM;	\
-			MEM_GDS_WORD0.MEM_OP  == instr;		\
+			MEM_GDS_WORD0.MEM_OP   == instr;		\
 		end constraints;						\
 	end tuple
 
@@ -2254,13 +2254,11 @@ architecture R800 Evergreen;
 	MEM_GDS_TEMPLATE( MEM_GDS	);
 	MEM_GDS_TEMPLATE( MEM_TF_WRITE	);
 
-
-
 	//--------------------------------------------------------------------------
 	//	MEM LDS template
 	//--------------------------------------------------------------------------
 #define	MEM_LDS_TEMPLATE( instr )				\
-	tuple LDS_ ## instr (64):							\
+	tuple LDS_ ## instr (64):					\
 		microcode ALU_WORD0;					\
 		microcode ALU_WORD1_LDS_IDX_OP;			\
 												\

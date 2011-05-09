@@ -285,6 +285,11 @@ page: 9-283	(inconsistency)
 	The Microcode section depicts 3 parts but in the Format section only two of them are enumerated. Possibly MEM_GDS_WORD2 is missing.
 
 
+page: 9-284 and 9-285	(inconsistency)
+	At the microcode section unrecognizable microcodes are depicted.
+	VTX_INST field and VTX_INST_MEM operations cannot found nowhere else in the documentation. GLOBAL_DS_WRITE and GLOBAL_DS_READ as well.
+
+
 page: 9-286	(copy paste)
 	"Format ALU_WORD0 (page 10-23) and ALU_WORD1_OP3 (page 10-32)." The second microcode must be ALU_WORD1_LDS_IDX_OP.
 
