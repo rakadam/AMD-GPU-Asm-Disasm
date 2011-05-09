@@ -281,6 +281,14 @@ page: 9-279	(instruction name is wrong)
 	"Instruction Field TEX_INST == TEX_INST_SET_TCTURE_OFFSETS, opcode 9 (0x9)." Its opcode is 9. This is good but the name should be TEX_INST_SET_TEXTURE_OFFSETS.
 
 
+page: 9-283	(inconsistency)
+	The Microcode section depicts 3 parts but in the Format section only two of them are enumerated. Possibly MEM_GDS_WORD2 is missing.
+
+
+page: 9-286	(copy paste)
+	"Format ALU_WORD0 (page 10-23) and ALU_WORD1_OP3 (page 10-32)." The second microcode must be ALU_WORD1_LDS_IDX_OP.
+
+
 page: 9-67 (opcode is wrong)
 	CNDE
 	opcode 24 is written here
@@ -354,6 +362,11 @@ page 10-40: (inconsistency)
 		17 OP3_INST_LDS_IDX_OP: This opcodes implies ALU_WORD*_LDS_IDX_OP encoding.
 		[31:18] Reserved."
 	bits 16:0 and 31:18 are not reserved, they are used very much in ALU_WORD1_LDS_IDX_OP
+
+
+page: page 10-41 (missing end line)
+	The 33 DS_SUB_RET operation is "hidden" into the line 32 DS_INDT_ADD_RET operation.
+
 
 page 10-47: (missing enum)
 	in VTX_WORD1_GPR, DATA_FORMAT field

@@ -598,6 +598,7 @@ architecture R800 Evergreen;
 			DS_INST_SHORT_WRITE		19;
 			(*reserved 20-31*)
 			DS_INST_ADD_RET			32;
+			DS_INST_SUB_RET			33;
 			DS_INST_RSUB_RET		34;
 			DS_INST_INC_RET			35;
 			DS_INST_DEC_RET			36;
@@ -2123,7 +2124,7 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	FTVCC instructions
 	//--------------------------------------------------------------------------
-//	FTVCC_TEMPLATE( FETCH				);
+	FTVCC_TEMPLATE( FETCH				);
 	FTVCC_TEMPLATE( GET_BUFFER_RESINFO	);
 
 	tuple SEMANTIC (128):
@@ -2206,20 +2207,124 @@ architecture R800 Evergreen;
 
 
 //==============================================================================
-//	
+//	Memory related Instructions
 //==============================================================================
 
-	tuple MEM_RD_SCRATCH(128):
-		microcode MEM_RD_WORD0;
-		microcode MEM_RD_WORD1;
-		microcode MEM_RD_WORD2;
-		microcode padding_32; 
+	//--------------------------------------------------------------------------
+	//	MEM Read template
+	//--------------------------------------------------------------------------
+#define	MEM_RD_TEMPLATE( instr )				\
+	tuple instr (128):							\
+		microcode MEM_RD_WORD0;					\
+		microcode MEM_RD_WORD1;					\
+		microcode MEM_RD_WORD2;					\
+		microcode padding_32;					\
+												\
+		constraints:							\
+			MEM_RD_WORD0.VC_INST == VC_INST_MEM;\
+			MEM_RD_WORD0.MEM_OP  == instr;		\
+		end constraints;						\
+	end tuple
 
-		constraints:
-			MEM_RD_WORD0.VC_INST == VC_INST_MEM;
-			MEM_RD_WORD0.MEM_OP == MEM_RD_SCRATCH;
-		end constraints;
-	end tuple;
+	//--------------------------------------------------------------------------
+	//	MEM Read instructions
+	//--------------------------------------------------------------------------
+	MEM_RD_TEMPLATE( MEM_RD_SCATTER		);
+	MEM_RD_TEMPLATE( MEM_RD_SCRATCH		);
+
+	//--------------------------------------------------------------------------
+	//	MEM GDS template
+	//--------------------------------------------------------------------------
+#define	MEM_GDS_TEMPLATE( instr )				\
+	tuple instr (128):							\
+		microcode MEM_GDS_WORD0;				\
+		microcode MEM_GDS_WORD1;				\
+		microcode MEM_GDS_WORD2;				\
+		microcode padding_32;					\
+												\
+		constraints:							\
+			MEM_GDS_WORD0.MEM_INST == MEM_INST_MEM;	\
+			MEM_GDS_WORD0.MEM_OP  == instr;		\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	MEM GDS instructions
+	//--------------------------------------------------------------------------
+	MEM_GDS_TEMPLATE( MEM_GDS	);
+	MEM_GDS_TEMPLATE( MEM_TF_WRITE	);
+
+
+
+	//--------------------------------------------------------------------------
+	//	MEM LDS template
+	//--------------------------------------------------------------------------
+#define	MEM_LDS_TEMPLATE( instr )				\
+	tuple LDS_ ## instr (64):							\
+		microcode ALU_WORD0;					\
+		microcode ALU_WORD1_LDS_IDX_OP;			\
+												\
+		constraints:							\
+			ALU_WORD1_LDS_IDX_OP.ALU_INST == OP3_INST_LDS_IDX_OP;	\
+			ALU_WORD1_LDS_IDX_OP.LDS_OP   == DS_INST_ ## instr;		\
+		end constraints;						\
+	end tuple
+
+	//--------------------------------------------------------------------------
+	//	MEM LDS instructions
+	//--------------------------------------------------------------------------
+	MEM_LDS_TEMPLATE( ADD						);
+	MEM_LDS_TEMPLATE( ADD_RET					);
+	MEM_LDS_TEMPLATE( AND						);
+	MEM_LDS_TEMPLATE( AND_RET					);
+	MEM_LDS_TEMPLATE( ATOMIC_ORDERED_ALLOC_RET	);
+	MEM_LDS_TEMPLATE( BYTE_READ_RET				);
+	MEM_LDS_TEMPLATE( BYTE_WRITE				);
+	MEM_LDS_TEMPLATE( CMP_STORE					);
+	MEM_LDS_TEMPLATE( CMP_STORE_SPF				);
+	MEM_LDS_TEMPLATE( CMP_XCHG_RET				);
+	MEM_LDS_TEMPLATE( CMP_XCHG_SPF_RET			);
+	MEM_LDS_TEMPLATE( DEC						);
+	MEM_LDS_TEMPLATE( DEC_RET					);
+	MEM_LDS_TEMPLATE( INC						);
+	MEM_LDS_TEMPLATE( INC_RET					);
+	MEM_LDS_TEMPLATE( MAX_INT					);
+	MEM_LDS_TEMPLATE( MAX_INT_RET				);
+	MEM_LDS_TEMPLATE( MAX_UINT					);
+	MEM_LDS_TEMPLATE( MAX_UINT_RET				);
+	MEM_LDS_TEMPLATE( MIN_INT					);
+	MEM_LDS_TEMPLATE( MIN_INT_RET				);
+	MEM_LDS_TEMPLATE( MIN_UINT					);
+	MEM_LDS_TEMPLATE( MIN_UINT_RET				);
+	MEM_LDS_TEMPLATE( MSKOR						);
+	MEM_LDS_TEMPLATE( MSKOR_RET					);
+	MEM_LDS_TEMPLATE( OR						);
+	MEM_LDS_TEMPLATE( OR_RET					);
+	MEM_LDS_TEMPLATE( READ_REL_RET				);
+	MEM_LDS_TEMPLATE( READ_RET					);
+	MEM_LDS_TEMPLATE( READ2_RET					);
+	MEM_LDS_TEMPLATE( READWRITE_RET				);
+	MEM_LDS_TEMPLATE( RSUB						);
+	MEM_LDS_TEMPLATE( RSUB_RET					);
+	MEM_LDS_TEMPLATE( SHORT_READ_RET			);
+	MEM_LDS_TEMPLATE( SHORT_WRITE				);
+	MEM_LDS_TEMPLATE( SUB						);
+	MEM_LDS_TEMPLATE( SUB_RET					);
+	MEM_LDS_TEMPLATE( UBYTE_READ_RET			);
+	MEM_LDS_TEMPLATE( USHORT_READ_RET			);
+	MEM_LDS_TEMPLATE( WRITE						);
+	MEM_LDS_TEMPLATE( WRITE_REL					);
+	MEM_LDS_TEMPLATE( WRITE2					);
+	MEM_LDS_TEMPLATE( XCHG_REL_RET				);
+	MEM_LDS_TEMPLATE( XCHG_RET					);
+	MEM_LDS_TEMPLATE( XCHG2_RET					);
+	MEM_LDS_TEMPLATE( XOR						);
+	MEM_LDS_TEMPLATE( XOR_RET					);
+
+
+//==============================================================================
+//	
+//==============================================================================
 
 #define ALU_INST_OP2_TEMPLATE(instr) \
 	tuple instr (64): \
@@ -2227,15 +2332,6 @@ architecture R800 Evergreen;
 		microcode ALU_WORD1_OP2; \
 		constraints: \
 			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr; \
-		end constraints; \
-	end tuple
-	
-#define CF_INST_TEMPLATE(instr) \
-	tuple instr (64): \
-		microcode CF_WORD0; \
-		microcode CF_WORD1; \
-		constraints: \
-			CF_WORD1.CF_INST == CF_INST_ ## instr; \
 		end constraints; \
 	end tuple
 
@@ -2300,14 +2396,4 @@ architecture R800 Evergreen;
 		end constraints;
 	end tuple;
 	
-	tuple FETCH(128):
-		microcode VTX_WORD0;
-		microcode VTX_WORD1_GPR;
-		microcode VTX_WORD2;
-		microcode padding_32;
-		
-		constraints:
-			VTX_WORD0.VC_INST == VC_INST_FETCH;
-		end constraints;
-	end tuple;
 end;
