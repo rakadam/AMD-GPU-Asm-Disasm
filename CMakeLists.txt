@@ -17,7 +17,7 @@ ADD_EXECUTABLE(bin2cpp bin2cpp.cpp)
 
 ADD_CUSTOM_COMMAND(OUTPUT r800_def.hpp
 	COMMAND bin2cpp r800.def.ii r800_def r800_def.hpp
-	DEPENDS bin2cpp)
+	DEPENDS bin2cpp r800.def.ii)
 	
 ADD_CUSTOM_COMMAND(OUTPUT r800.def.ii
 	COMMAND cpp r800.def > r800.def.ii
