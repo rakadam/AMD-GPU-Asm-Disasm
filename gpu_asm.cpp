@@ -447,8 +447,11 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		int match_size = 0;
 		gpu_asm::microcode_format_tuple match_tuple;
 		
+// 		cerr << orig_size - data.size() << endl;
+
 		for (auto i = asmdef.microcode_format_tuples.begin(); i != asmdef.microcode_format_tuples.end(); i++)
 		{
+
 			if (filter_prefix != i->second.tuple.front().substr(0, filter_prefix.size()))
 			{
 				continue;
@@ -464,6 +467,8 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			}
 		}
 	
+// 		cerr << match_tuple.name << endl;
+		
 		if (match_num > 1)
 		{
 			cerr << "Ambiguous matches at " << orig_size - data.size() << endl;
@@ -483,8 +488,8 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 			result += "\n";
 			
-			if (match_tuple.tuple[0] == "CF_WORD0")
-			if (check_field(data, match_tuple, "END_OF_PROGRAM"))
+// 			if (match_tuple.tuple[0] == "CF_WORD0")
+			if (check_field(data, match_tuple, "END_OF_PROGRAM", "", false))
 			{
 				break;
 			}
@@ -536,6 +541,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			
 			throw runtime_error("Disassembling error");
 		}
+		
 		
 	} while (match_num);
 	
@@ -621,7 +627,9 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 				match_tuple = i->second;
 			}
 		}
-	
+		
+// 		cerr << filter_prefix << match_tuple.name << endl;
+		
 		if (match_num > 1)
 		{
 			cerr << "Ambiguous matches at " << orig_size - data.size() << endl;
@@ -1038,7 +1046,7 @@ std::vector<uint32_t> gpu_asm::byte_mirror(std::vector<uint32_t> codes)
 	return codes;
 }
 
-long gpu_disassembler::check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value)
+long gpu_disassembler::check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value, bool strict)
 {
 	int offset = 0;
 	string elem_name;
@@ -1075,7 +1083,12 @@ long gpu_disassembler::check_field(const std::vector<uint32_t>& data, const gpu_
 		}
 	}
 	
-	throw runtime_error("Field not found: " + field_name);
+	if (strict)
+	{
+		throw runtime_error("Field not found: " + field_name);
+	}
+	
+	return 0;
 }
 
 std::string gpu_disassembler::parse_literals(const std::vector<uint32_t>& data, int offset, int size)

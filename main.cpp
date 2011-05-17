@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <assert.h>
 #include "gpu_asm.hpp"
 
 using namespace std;
 
 
-int main()
+int main(int argc, char* argv[])
 {
 	system("cpp r800.def > r800.def.ii");
 	ifstream f("r800.def.ii");
@@ -38,8 +39,10 @@ int main()
 	};*/
 	
 // 	FILE *f4 = fopen("gpu_bin.bin", "r");
-	FILE *f4 = fopen("ki.dat", "r");
+// 	FILE *f4 = fopen("ki.dat", "r");
 	
+	FILE *f4 = fopen(argv[1], "r");
+	assert(f4);
 	uint32_t val;
 	
 	fseek(f4, 0x0, SEEK_SET);
@@ -79,16 +82,3 @@ int main()
 	
 	fclose(f3);
 }
-
-/*
-0 : 0x40400020 0xA00C0000 0x00000014 0x81800000
-4 : 0x00000030 0x80400400 0x00000024 0xA0040000
-8 : 0x0100E02B 0xD5D0F004 0x00000000 0x86800000
-12 : 0x00000034 0x80400000 0x00000026 0xA0040000
-
-0 : 0x4040001A 0xA00C0000 0x00000028 0x81800000
-4 : 0x00000028 0x80400C00 0x0000001E 0xA0040000
-8 : 0x0100E02B 0xD5D0F004 0x00000000 0x86800000
-12 : 0x0000002C 0x80400400 0x00000020 0xA0040000
-16 : 0x0100E02B 0xD5D0F004 0x00000000 0x86800000
-*/

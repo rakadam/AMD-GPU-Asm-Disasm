@@ -15,6 +15,8 @@ architecture R800 Evergreen;
 			unnamed_inline_const 218:192;
 			Kcache_bank2 287:256;
 			Kcache_bank3 319:288;
+			SRC_PARAM 511:448;
+			
 			ALU_SRC_LDS_OQ_A			219;
 			ALU_SRC_LDS_OQ_B			220;
 			ALU_SRC_LDS_OQ_A_POP		221;
@@ -1233,6 +1235,13 @@ architecture R800 Evergreen;
 			SRF_MODE_NO_ZERO 1;
 		end enum;
 		
+		enum(6) DATA_FORMAT:
+			FMT_INVALID 0;
+			FMT_32_32_FLOAT 30;
+			FMT_32_32_32_32_FLOAT 35;
+			FMT_32_32_32_FLOAT 48;
+		end enum;
+		
 		field DST_GRP(6:0) INT;
 		field DST_REL(7) BOOL;
 		field DST_SEL_X(11:9) CHAN_SEL;
@@ -1240,7 +1249,7 @@ architecture R800 Evergreen;
 		field DST_SEL_Z(17:15) CHAN_SEL;
 		field DST_SEL_W(20:18) CHAN_SEL;
 		field USE_CONST_FIELDS(21) BOOL;
-		field DATA_FORMAT(27:22) INT; //not defined in the documentation!!
+		field DATA_FORMAT(27:22) DATA_FORMAT; //not defined in the documentation!!
 		field NUM_FORMAT_ALL(29:28) NUM_FORMAT_ALL;
 		field FORMAT_COMP_ALL(30) FORMAT_COMP_ALL;
 		field SRF_MODE_ALL(31) SRF_MODE_ALL;
@@ -1703,6 +1712,7 @@ architecture R800 Evergreen;
 												\
 		constraints:							\
 			CF_GWS_WORD0.GWS_OPCODE == instr;	\
+			CF_WORD1.CF_INST		== CF_INST_GLOBAL_WAVE_SYNC;	\
 		end constraints;						\
 	end tuple									\
 
@@ -1710,17 +1720,7 @@ architecture R800 Evergreen;
 	//	CF GWS instructions
 	//--------------------------------------------------------------------------
 	CF_GWS_TEMPLATE( GWS_BARRIER	);
-	
-	tuple GWS_INIT (64):
-		microcode CF_GWS_WORD0;
-		microcode CF_WORD1;
-
-		constraints:
-			CF_GWS_WORD0.GWS_OPCODE == GWS_INIT;
-			CF_WORD1.CF_INST		== CF_INST_GLOBAL_WAVE_SYNC;
-		end constraints;
-	end tuple;
-
+	CF_GWS_TEMPLATE( GWS_INIT );
 	CF_GWS_TEMPLATE( GWS_SEMA_P		);
 	CF_GWS_TEMPLATE( GWS_SEMA_V		);
 

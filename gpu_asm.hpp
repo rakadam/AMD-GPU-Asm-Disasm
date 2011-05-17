@@ -63,7 +63,7 @@ public:
 	std::string parse_microcode(uint32_t code, const gpu_asm::microcode_format& format, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_field(uint32_t code, gpu_asm::field, gpu_asm::microcode_format_tuple);
 	
-	long check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value = ""); //field_value == "": returns the numeric val of the field, otherwise returns a boolean
+	long check_field(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, std::string field_name, std::string field_value = "", bool strict = true); //field_value == "": returns the numeric val of the field, otherwise returns a boolean
 	
 	std::string parse_literals(const std::vector<uint32_t>& data, int offset, int size);
 	

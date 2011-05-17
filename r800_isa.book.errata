@@ -16,6 +16,9 @@ page: 9-16 (opcode is wrong)
 	"CF_INST == CF_INST_EXPORT_DONE, opcode 40 (0x28)." CF_ALLOC_EXPORT_WORD1_SWIZ  CF_INST_EXPORT_DONE has value 84 and not 40.
 
 
+page: 9-18 (opcode is missing)
+	CF_INST should be there but its missing
+	
 page: 9-24 (opcode is wrong)
 	"CF_INST == CF_INST_JUMPTABLE, opcode 28 (0x1D)." CF_INST_JUMPTABLE is 29.
 
