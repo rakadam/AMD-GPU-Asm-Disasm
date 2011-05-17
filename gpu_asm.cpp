@@ -628,7 +628,11 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 			}
 		}
 		
-// 		cerr << filter_prefix << match_tuple.name << endl;
+		cerr << filter_prefix << match_tuple.name << endl;
+		if (match_tuple.name == "MEM_GDS")
+		{
+			cerr << check_field(data, match_tuple, "MEM_OP") << endl;
+		}
 		
 		if (match_num > 1)
 		{
@@ -901,7 +905,7 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 	string fname = field.name;
 	bool code_addr = false;
 	string code_addr_type = "";
-	
+	bool nodefault = false;
 	string s_name = fname + "_MEANS_";
 	string code_addr_prefix = fname + "_IS_";
 	
@@ -918,6 +922,17 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 			code_addr_type = i->substr(code_addr_prefix.size(), i->size());
 			code_addr = true;
 // 			break;
+		}
+		
+		if (*i == (fname+"_NODEFAULT"))
+		{
+// 			cerr << "nodefault: " << fname << endl;
+			nodefault = true;
+		}
+		
+		if (*i == (fname+"_IMPLICIT"))
+		{
+			return "";
 		}
 	}
 	
@@ -966,7 +981,8 @@ std::string gpu_disassembler::parse_field(uint32_t code, gpu_asm::field field, g
 			}
 			
 			ss << fname << "(@" << label_table.at(value) << ")"; 
-		} else if (value)
+		} 
+		else if (value or nodefault)
 		{
 			ss << fname << "(" << value << ")";
 		}

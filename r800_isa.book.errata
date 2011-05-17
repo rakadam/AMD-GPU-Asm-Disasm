@@ -383,3 +383,7 @@ page 10-47: (missing enum)
 	Which is a self reference. It also the same on page 10-49.
 	I haven't found any other mention of the DATA_FORMAT. 
 
+
+page: 10-63 (missing enum value)
+	in MEM_GDS_WORD0, SRC_SEL_Y SRC_SEL_Z can have value 7, which looks something like SEL_UNUSED
+	
