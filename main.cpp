@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 // 	cout << "disassemble: " << endl 
 	cout << dis.disassemble(code) << endl << "end;" << endl;
 	
-	ifstream f2("test.asm");
+	ifstream f2("second.asm");
 	
 	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
 	

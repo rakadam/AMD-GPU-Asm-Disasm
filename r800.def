@@ -1463,7 +1463,7 @@ architecture R800 Evergreen;
 
 		enum(3)	MEM_OP:
 			(*reserved 3:0*)
-			MEM_GDS_UNI			4;
+			MEM_GDS_UNI		4;
 			MEM_TF_WRITE	5;
 			(*reserved 7:6*)
 		end enum;

@@ -25,6 +25,9 @@ std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 	
 	string cf_prefix = "CF_";
 	string alu_prefix = "ALU_";
+	string vtx_prefix = "VTX_";
+	string tex_prefix = "TEX_";
+	string gds_prefix = "MEM_GDS_";
 	
 	//split parsed instructions into data and control flow
 	for (int i = 0; i < int(raw_stream.size()); i++)
@@ -101,7 +104,7 @@ std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 	
 	//allocate data flow clauses after the control flow
 	
-	int data_flow_index = dword_pos+10;
+	int data_flow_index = dword_pos+20;
 	
 	//first allocate ALU clauses they only need normal 64 alignment (we hope)
 	for (int i = 0; i < int(parsed_instructions.size()); i++)
@@ -113,12 +116,18 @@ std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 			if (tuple.tuple.front().substr(0, alu_prefix.size()) == alu_prefix)
 			{
 				data_flow_index += data_flow_index%2; //aliging to 64 bits
-				
+/*				if (data_flow_index%4)
+				{
+					data_flow_index += 4-data_flow_index%4; //align 128 bits
+				}*/
+				printf("alu:%x\n", data_flow_index*4);
 				parsed_instructions[i].df_pos = data_flow_index;
 				data_flow_index += parsed_instructions[i].df_codes.size();
 			}
 		}
 	}
+	
+	data_flow_index += 20; //For some undocumented reason the reference code has this padding
 	
 	//Than allocate fetch clauses they need normal 128 alignment
 	for (int i = 0; i < int(parsed_instructions.size()); i++)
@@ -127,13 +136,54 @@ std::vector<uint32_t> gpu_assembler::assemble(std::string text)
 		{
 			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
 			
-			if (tuple.tuple.front().substr(0, alu_prefix.size()) != alu_prefix)
+			if (tuple.tuple.front().substr(0, vtx_prefix.size()) == vtx_prefix)
+			{
+				if (data_flow_index%4)
+				{
+					data_flow_index += 4-data_flow_index%4; //align 128 bits
+				}
+				printf("vtx:%x\n", data_flow_index*4);
+				parsed_instructions[i].df_pos = data_flow_index;
+				data_flow_index += parsed_instructions[i].df_codes.size();
+			}
+		}
+	}
+	
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		if (parsed_instructions[i].df_codes.size())
+		{
+			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
+			
+			if (tuple.tuple.front().substr(0, tex_prefix.size()) == tex_prefix)
+			{
+				if (data_flow_index%4)
+				{
+					data_flow_index += 4-data_flow_index%4; //align 128 bits
+				}
+				printf("tex:%x\n", data_flow_index*4);
+				parsed_instructions[i].df_pos = data_flow_index;
+				data_flow_index += parsed_instructions[i].df_codes.size();
+			}
+		}
+	}
+	
+// 	data_flow_index += 20;
+
+	for (int i = 0; i < int(parsed_instructions.size()); i++)
+	{
+		if (parsed_instructions[i].df_codes.size())
+		{
+			auto tuple = asmdef.microcode_format_tuples.at(parsed_instructions[i].df_clause.front().name);
+			
+			if (tuple.tuple.front().substr(0, gds_prefix.size()) == gds_prefix)
 			{
 				if (data_flow_index%4)
 				{
 					data_flow_index += 4-data_flow_index%4; //align 128 bits
 				}
 				
+				printf("gds: %x\n", data_flow_index*4);
 				parsed_instructions[i].df_pos = data_flow_index;
 				data_flow_index += parsed_instructions[i].df_codes.size();
 			}
