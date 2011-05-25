@@ -304,7 +304,9 @@ std::vector<uint32_t> gpu_assembler::assemble_instruction(gpu_asm::instruction i
 	
 	assert(int(literal_mapping.size()) == instr_lit_num);
 	
+	
 	assemble_literals(data, literal_mapping, instr);
+	
 	assemble_fields(data, instr);
 	
 	return data;

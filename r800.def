@@ -807,14 +807,14 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	microcode CF_GWS_WORD0(32):
 		enum(2)	VAL_INDEX_MO:
-			GWS_INDEX_NONE;
+			GWS_INDEX_NONE default;
 			GWS_INDEX_0;
 			GWS_INDEX_1;
 			GWS_INDEX_MIX;
 		end enum;
 		
 		enum(2) RSRC_INDEX_M:
-			CF_INDEX_NONE;
+			CF_INDEX_NONE default;
 			CF_INDEX_0;
 			CF_INDEX_1;
 			CF_INVALID;
@@ -947,7 +947,7 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	microcode CF_ALU_WORD0_EXT(32):
 		enum(2) KCACHE_BANK_INDEX_MODE:
-			CF_INDEX_NONE;
+			CF_INDEX_NONE default;
 			CF_INDEX_0;
 			CF_INDEX_1;
 			CF_INVALID;
@@ -1070,7 +1070,7 @@ architecture R800 Evergreen;
 		end enum;
 		
 		enum(2) RAT_INDEX_MODE:
-			CF_INDEX_NONE;
+			CF_INDEX_NONE default;
 			CF_INDEX_0;
 			CF_INDEX_1;
 			CF_INVALID;
@@ -1558,7 +1558,7 @@ architecture R800 Evergreen;
 		end enum;
 
 		enum(2)	UAV_INDEX_MODE:
-			CF_INDEX_NONE		0;
+			CF_INDEX_NONE 0 default;
 			CF_INDEX_0			1;
 			CF_INDEX_1			2;
 			CF_INDEX_INVALID	3;
@@ -1610,7 +1610,7 @@ architecture R800 Evergreen;
 	tuple instr (64):								\
 		microcode CF_ALU_WORD0;						\
 		microcode CF_ALU_WORD1;						\
-													\
+		option ADDR_IS_ALU;							\
 		constraints:								\
 			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
 		end constraints;							\
@@ -1619,8 +1619,8 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	CF ALU instructions
 	//--------------------------------------------------------------------------
-//	CF_ALU_TEMPLATE( ALU				);
-	CF_ALU_TEMPLATE( ALU_BREAK			);
+	CF_ALU_TEMPLATE( ALU			);
+	CF_ALU_TEMPLATE( ALU_BREAK		);
 	CF_ALU_TEMPLATE( ALU_CONTINUE		);
 	CF_ALU_TEMPLATE( ALU_ELSE_AFTER		);
 	CF_ALU_TEMPLATE( ALU_POP_AFTER		);
@@ -1636,6 +1636,7 @@ architecture R800 Evergreen;
 		microcode CF_ALU_WORD1;						\
 		microcode CF_ALU_WORD0_EXT;					\
 		microcode CF_ALU_WORD1_EXT;					\
+		option ADDR_IS_ALU; \
 													\
 		constraints:								\
 			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr;	\
@@ -1654,43 +1655,49 @@ architecture R800 Evergreen;
 	tuple instr (64):							\
 		microcode CF_WORD0;						\
 		microcode CF_WORD1;						\
-												\
+		option JUMPTABLE_SE_MEANS_NOTHING;\
+		\
 		constraints:							\
 			CF_WORD1.CF_INST == CF_INST_ ## instr;	\
 		end constraints;						\
-	end tuple									\
+	end tuple
+	
+#define	CF_TEMPLATE_OPT( instr , op)					\
+	tuple instr (64):							\
+		microcode CF_WORD0;						\
+		microcode CF_WORD1;						\
+		option JUMPTABLE_SE_MEANS_NOTHING;\
+		option op;	\
+		\
+		constraints:							\
+			CF_WORD1.CF_INST == CF_INST_ ## instr;	\
+		end constraints;						\
+	end tuple
 
 	//--------------------------------------------------------------------------
 	//	CF instructions
 	//--------------------------------------------------------------------------
-	CF_TEMPLATE( CALL				);
-	CF_TEMPLATE( CALL_FS			);
-	CF_TEMPLATE( CUT_VERTEX			);
-	CF_TEMPLATE( ELSE				);
+	CF_TEMPLATE_OPT( CALL, ADDR_IS_CF);
+	CF_TEMPLATE( CALL_FS);
+	CF_TEMPLATE( CUT_VERTEX);
+	CF_TEMPLATE_OPT( ELSE, ADDR_IS_CF);
 	CF_TEMPLATE( EMIT_CUT_VERTEX	);
 	CF_TEMPLATE( EMIT_VERTEX		);
-// 	CF_TEMPLATE( GDS				);
-
-	tuple GDS (64):							
-		microcode CF_WORD0;						
-		microcode CF_WORD1;						
-		option ADDR_IS_MEM_GDS;
-		
-		constraints:							
-			CF_WORD1.CF_INST == CF_INST_GDS;	
-		end constraints;						
-	end tuple;
-
+	CF_TEMPLATE_OPT( GDS, ADDR_IS_MEM_GDS);
 	CF_TEMPLATE( HALT				);
-	CF_TEMPLATE( JUMP				);
-	CF_TEMPLATE( JUMPTABLE			);	//	FIXME: This is 29 but the doc says 28
+	CF_TEMPLATE_OPT( JUMP, ADDR_IS_CF);
+// 	...( JUMPTABLE			);	//	FIXME: This is 29 but the doc says 28
 	CF_TEMPLATE( KILL				);
-	CF_TEMPLATE( LOOP_BREAK			);
-	CF_TEMPLATE( LOOP_CONTINUE		);
-//	CF_TEMPLATE( LOOP_END			);
-//	CF_TEMPLATE( LOOP_START			);
-//	CF_TEMPLATE( LOOP_START_DX10	);
-//	CF_TEMPLATE( LOOP_START_NO_AL	);
+//  	CF_TEMPLATE( LOOP_BREAK			); 
+//  	CF_TEMPLATE( LOOP_CONTINUE		); 
+	CF_TEMPLATE_OPT( LOOP_END, ADDR_IS_CF);
+	CF_TEMPLATE_OPT( LOOP_START, ADDR_IS_CF);
+	CF_TEMPLATE_OPT( LOOP_START_DX10, ADDR_IS_CF);
+	CF_TEMPLATE_OPT( LOOP_START_NO_AL, ADDR_IS_CF);
+
+	CF_TEMPLATE_OPT( POP, ADDR_IS_CF);
+	CF_TEMPLATE_OPT( PUSH, ADDR_IS_CF);
+	CF_TEMPLATE( RETURN );
 
 	//--------------------------------------------------------------------------
 	//	Export template
@@ -1855,9 +1862,6 @@ architecture R800 Evergreen;
 	//	CF Operations instructions
 	//--------------------------------------------------------------------------
 //	CF_OP_TEMPLATE( NOP		);
-	CF_OP_TEMPLATE( POP		);
-	CF_OP_TEMPLATE( PUSH	);
-	CF_OP_TEMPLATE( RETURN	);
 //	CF_OP_TEMPLATE( TC		);
 	CF_OP_TEMPLATE( TC_ACK	);
 //	CF_OP_TEMPLATE( VC		);
@@ -2392,23 +2396,7 @@ architecture R800 Evergreen;
 			ALU_WORD1_OP2.ALU_INST == OP2_INST_GROUP_BARRIER;
 		end constraints;
 	end tuple;
-
-#define CF_ALU_INST_TEMPLATE(instr) \
-	tuple instr (64): \
-		microcode CF_ALU_WORD0; \
-		microcode CF_ALU_WORD1; \
-		option ADDR_IS_ALU; \
-		constraints: \
-			CF_ALU_WORD1.CF_INST == CF_INST_ ## instr ; \
-		end constraints; \
-	end tuple
 	
-	CF_ALU_INST_TEMPLATE(ALU);
-	
-	CF_INST_TEMPLATE_OPT(LOOP_START, ADDR_IS_CF);
-	CF_INST_TEMPLATE_OPT(LOOP_START_DX10, ADDR_IS_CF);
-	CF_INST_TEMPLATE_OPT(LOOP_START_NO_AL, ADDR_IS_CF);
-	CF_INST_TEMPLATE_OPT(LOOP_END, ADDR_IS_CF);
 	CF_INST_TEMPLATE_OPT(TC, ADDR_IS_TEX);
 	CF_INST_TEMPLATE_OPT(VC, ADDR_IS_VTX);
 	CF_INST_TEMPLATE_OPT(WAIT_ACK, ADDR_MEANS_COUNT);
