@@ -230,7 +230,7 @@ architecture R800 Evergreen;
 			OP2_INST_SET_LDS_SIZE		90;
 			(*reserved 128:91*)
 
-			//	129 to 95 are for transcendental units only
+			//	129 to 159 are for transcendental units only
 			OP2_INST_EXP_IEEE			129;
 			OP2_INST_LOG_CLAMPED		130;
 			OP2_INST_LOG_IEEE			131;
@@ -1116,7 +1116,7 @@ architecture R800 Evergreen;
 		field RAT_INST(9:4) RAT_INST;
 		field Reserved			(10)	INT;
 		field RAT_INDEX_MODE	(12:11) RAT_INDEX_MODE;
-		field TYPE(14:13) INT; /*should be enum but it's meaning depends on others*/	//	FIXME: What to do this field? Enumifying or staying as it is?
+		field TYPE(14:13) INT;
 		field RW_GPR(21:15) INT;
 		field RW_REL(22) BOOL;
 		field INDEX_GPR(29:23) INT;
@@ -1400,13 +1400,6 @@ architecture R800 Evergreen;
 			TEX_INST_SAMPLE_C_G_LB			30;
 			TEX_INST_GATHER4_C_O			31;
 		end enum;
-		
-//		enum(2)	INST_MOD:
-			(*LD					 3;*)
-			(*GetGradientsH		 7;*)
-			(*GetGradientsV		 8;*)
-			(*Gather4				21;*)
-//		end enum;
 
 		enum(2)	INDEX_MODE:
 			CF_INDEX_NONE;
@@ -1641,7 +1634,7 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	CF ALU template
 	//--------------------------------------------------------------------------
-#define	CF_ALU_TEMPLATE( instr )					\
+#define	CF_ALU_TEMPLATE( instr )		\
 	tuple instr (64):								\
 		microcode CF_ALU_WORD0;						\
 		microcode CF_ALU_WORD1;						\
@@ -1741,7 +1734,7 @@ architecture R800 Evergreen;
 #define	CF_EXPORT_TEMPLATE( instr )				\
 	tuple instr (64):							\
 		microcode CF_ALLOC_EXPORT_WORD0;		\
-/*		microcode CF_ALLOC_EXPORT_WORD1_BUF;	*/\
+/*		microcode CF_ALLOC_EXPORT_WORD1_BUF;	WTF WTF WTF?*/\
 		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	\
 		option RW_GPR_NODEFAULT; \
 		option INDEX_GPR_NODEFAULT; \
@@ -1789,12 +1782,13 @@ architecture R800 Evergreen;
 	tuple MEM_EXPORT (64):
 		microcode CF_ALLOC_EXPORT_WORD0;
 		microcode CF_ALLOC_EXPORT_WORD1_BUF;
-/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	*/
+/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	WTF WTF WTF?*/
+		option ARRAY_SIZE_MEANS_NOTHING;
 
 		constraints:
 			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_EXPORT;
 /*			CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_MEM_EXPORT;*/
-/*			option ARRAY_SIZE_MEANS_NOTHING;*/	//	FIXME: ARRAY_SIZE is not used
+
 		end constraints;
 	end tuple;
 
@@ -1869,10 +1863,11 @@ architecture R800 Evergreen;
 	//	Memory scratch instruction
 	//--------------------------------------------------------------------------
 //	FIXME: How to solve that the second microcode can be two type of microcodes
+// WTF WTF WTF?
 	tuple MEM_WR_SCRATCH (64):
 		microcode CF_ALLOC_EXPORT_WORD0;
 		microcode CF_ALLOC_EXPORT_WORD1_BUF;
-/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	*/
+/*		microcode CF_ALLOC_EXPORT_WORD1_SWIZ;	WTF? */
 
 		constraints:
 			CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_WR_SCRATCH;
@@ -1896,7 +1891,6 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	CF Operations instructions
 	//--------------------------------------------------------------------------
-//	CF_OP_TEMPLATE( NOP		);
 //	CF_OP_TEMPLATE( TC		);
 	CF_OP_TEMPLATE( TC_ACK	);
 //	CF_OP_TEMPLATE( VC		);
@@ -2107,24 +2101,25 @@ architecture R800 Evergreen;
 	//--------------------------------------------------------------------------
 	//	More ALU Operations template
 	//--------------------------------------------------------------------------
-	//	FIXME: how to create logical OR between constraints???
-#define	ALU_MORE_OP_TEMPLATE( instr, x, y )		\
+#define	ALU_MORE_OP_TEMPLATE( instr)		\
 	tuple instr (64):							\
 		microcode ALU_WORD0;					\
 		microcode ALU_WORD1_OP2;				\
 												\
 		constraints:							\
-/*			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr ## _ ## x or*/	\
-			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr ## _ ## y;		\
+			ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr;		\
 		end constraints;						\
 	end tuple
 
 	//--------------------------------------------------------------------------
 	//	More ALU Operations instructions
 	//--------------------------------------------------------------------------
-	ALU_MORE_OP_TEMPLATE( FLT32_TO_FLT64, S, V	);
-	ALU_MORE_OP_TEMPLATE( FLT64_TO_FLT32, S, V	);
-	ALU_MORE_OP_TEMPLATE( MUL_64		, S, V	);
+	ALU_MORE_OP_TEMPLATE( FLT32_TO_FLT64_S);
+	ALU_MORE_OP_TEMPLATE( FLT32_TO_FLT64_V);
+	ALU_MORE_OP_TEMPLATE( FLT64_TO_FLT32_S);
+	ALU_MORE_OP_TEMPLATE( FLT64_TO_FLT32_V);
+	ALU_MORE_OP_TEMPLATE( MUL_64_S);
+	ALU_MORE_OP_TEMPLATE( MUL_64_V);
 
 	//--------------------------------------------------------------------------
 	//	ALU Operations 3 template
