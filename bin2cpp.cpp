@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
 //             return 1;
 //         }
 
-				code.push_back(rand()%256);
-				
+	code.push_back(rand()%256);
+	
         outfile << "0x" << hex << (it^code.back()) << ",";
         count ++;
 
