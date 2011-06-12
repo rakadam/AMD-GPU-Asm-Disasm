@@ -1926,6 +1926,17 @@ CF_OP_TEMPLATE( VC_ACK );
     end constraints; \
     end tuple
 
+#define ALU_OP_TEMPLATE_DST_PREFIXED( instr ) \
+    tuple ALU_ ## instr (64): \
+    microcode ALU_WORD0; \
+    microcode ALU_WORD1_OP2; \
+    option DST_GPR_NODEFAULT; \
+    \
+    constraints: \
+      ALU_WORD1_OP2.ALU_INST == OP2_INST_ ## instr; \
+    end constraints; \
+    end tuple
+
 //--------------------------------------------------------------------------
 // ALU Operations instructions
 //--------------------------------------------------------------------------
@@ -1962,7 +1973,22 @@ ALU_OP_TEMPLATE_DST( FLT32_TO_FLT16 );
 ALU_OP_TEMPLATE_DST( FRACT );
 ALU_OP_TEMPLATE_DST( FRACT_64 );
 ALU_OP_TEMPLATE_DST( FREXP_64 );
-// ALU_OP_TEMPLATE( GROUP_BARRIER );
+
+tuple GROUP_BARRIER(64):
+  microcode ALU_WORD0;
+  microcode ALU_WORD1_OP2;
+  option SRC0_SEL_MEANS_NOTHING;
+  option SRC1_SEL_MEANS_NOTHING;
+  option BANK_SWIZZLE_MEANS_NOTHING;
+  option DST_CHAN_MEANS_NOTHING;
+  option SRC0_CHAN_MEANS_NOTHING;
+  option SRC1_CHAN_MEANS_NOTHING;
+  
+  constraints:
+    ALU_WORD1_OP2.ALU_INST == OP2_INST_GROUP_BARRIER;
+  end constraints;
+end tuple;
+
 ALU_OP_TEMPLATE( GROUP_SEQ_BEGIN );
 ALU_OP_TEMPLATE( GROUP_SEQ_END );
 ALU_OP_TEMPLATE_DST( INT_TO_FLT );
@@ -2016,7 +2042,7 @@ ALU_OP_TEMPLATE_DST( MULHI_UINT );
 ALU_OP_TEMPLATE_DST( MULHI_UINT24 );
 ALU_OP_TEMPLATE_DST( MULLO_INT );
 ALU_OP_TEMPLATE_DST( MULLO_UINT );
-// ALU_OP_TEMPLATE_DST( NOP );
+ALU_OP_TEMPLATE_DST_PREFIXED( NOP );
 ALU_OP_TEMPLATE_DST( NOT_INT );
 ALU_OP_TEMPLATE_DST( OFFSET_TO_FLT );
 ALU_OP_TEMPLATE_DST( OR_INT );
@@ -2413,20 +2439,6 @@ MEM_LDS_TEMPLATE( XOR_RET );
 //  ALU_INST_OP2_TEMPLATE(ASHR_INT);
 //  ALU_INST_OP2_TEMPLATE(AND_INT);
 
-tuple GROUP_BARRIER(64):
-  microcode ALU_WORD0;
-  microcode ALU_WORD1_OP2;
-  option SRC0_SEL_MEANS_NOTHING;
-  option SRC1_SEL_MEANS_NOTHING;
-  option BANK_SWIZZLE_MEANS_NOTHING;
-  option DST_CHAN_MEANS_NOTHING;
-  option SRC0_CHAN_MEANS_NOTHING;
-  option SRC1_CHAN_MEANS_NOTHING;
-  
-  constraints:
-    ALU_WORD1_OP2.ALU_INST == OP2_INST_GROUP_BARRIER;
-  end constraints;
-end tuple;
 
 CF_INST_TEMPLATE_OPT(TC, ADDR_IS_TEX);
 CF_INST_TEMPLATE_OPT(VC, ADDR_IS_VTX);
