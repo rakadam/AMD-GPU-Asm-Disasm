@@ -1,4 +1,4 @@
-/*
+/*                     
  * Copyright 2011 StreamNovation Ltd. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are
@@ -1271,15 +1271,17 @@ microcode VTX_WORD1_GPR(32):
   end enum;
 
   enum(6) DATA_FORMAT:
-    FMT_INVALID 0;
+    FMT_INVALID 0 default;
     FMT_8 1;
     FMT_32_32_FLOAT 30;
+    FMT_32_32_32_32 34;
     FMT_32_32_32_32_FLOAT 35;
+    FMT_32_32_32 47;
     FMT_32_32_32_FLOAT 48;
     //TODO: fill it
   end enum;
 
-  field DST_GRP(6:0) INT;
+  field DST_GPR(6:0) INT;
   field DST_REL(7) BOOL;
   field DST_SEL_X(11:9) CHAN_SEL;
   field DST_SEL_Y(14:12) CHAN_SEL;
@@ -2202,6 +2204,8 @@ ALU_OP3_TEMPLATE( SAD_ACCUM_UINT );
     microcode VTX_WORD1_GPR; \
     microcode VTX_WORD2; \
     microcode padding_32; \
+    option SRC_GPR_NODEFAULT; \
+    option DST_GPR_NODEFAULT; \
     \
     constraints: \
       VTX_WORD0.VC_INST == VC_INST_ ## instr; \
@@ -2219,6 +2223,8 @@ tuple SEMANTIC (128):
   microcode VTX_WORD1_SEM;
   microcode VTX_WORD2;
   microcode padding_32;
+  option SRC_GPR_NODEFAULT;
+  option SEMANTIC_ID_NODEFAULT;
 
   constraints:
     VTX_WORD0.VC_INST == VC_INST_SEMANTIC;

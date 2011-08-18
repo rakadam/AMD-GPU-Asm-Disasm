@@ -13,6 +13,8 @@ SET(r800_asm_lib_SRC
 
 ADD_EXECUTABLE(as_r800 ${r800_asm_lib_SRC} asm_cui.cpp)
 
+ADD_EXECUTABLE(dis_r800 ${r800_asm_lib_SRC} main.cpp)
+
 ADD_EXECUTABLE(bin2cpp bin2cpp.cpp)
 
 ADD_CUSTOM_COMMAND(OUTPUT r800_def.hpp
