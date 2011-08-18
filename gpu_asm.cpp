@@ -653,6 +653,11 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	
 	int match_num;
 	
+  if (clause.prefix == "ALU")
+  {
+    result += "/////////////////////////////////////////////\n";
+  }
+  
 	clause.len++;
 	
 	filter_prefix = clause.prefix + "_";
@@ -688,7 +693,8 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	
 // 	cout << endl;
 	
-	
+	set<char> alu_chan;
+  
 	for (int icount = 0; icount < clause.len; icount++)
 	{
 		map<string, int> tuple_matches;
@@ -735,6 +741,46 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		
 		if (match_num == 1)
 		{
+      if (match_tuple.tuple[0] == "ALU_WORD0")
+      {
+        string s;
+        
+        if (check_field(data, match_tuple, "DST_CHAN", "CHAN_X"))
+        {
+          s = "X";
+        }
+        else if (check_field(data, match_tuple, "DST_CHAN", "CHAN_Y"))
+        {
+          s = "Y";
+        }
+        else if (check_field(data, match_tuple, "DST_CHAN", "CHAN_Z"))
+        {
+          s = "Z";
+        }
+        else if (check_field(data, match_tuple, "DST_CHAN", "CHAN_W"))
+        {
+          s = "W";
+        }
+        else
+        {
+          assert(false and "Unreachable");
+        }
+        
+        if (alu_chan.count(s[0]))
+        {
+          s = "T";
+        }
+          
+        if (alu_chan.count(s[0]))
+        {
+          s = "Invalid ALU channel";
+        }
+          
+        alu_chan.insert(s[0]);
+        
+        result += "    //" + s + ":\n";
+      }
+      
 			string p_str = parse_tuple(data, match_tuple);
 			
 			result += p_str;
@@ -758,13 +804,14 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 				
 				if (check_field(data, match_tuple, "LAST"))
 				{
+          alu_chan.clear();
 					int lit_size = 0;
 					
 					if (literal_chan_read.count(0) ||  literal_chan_read.count(1))
 					{
 						lit_size = 2;
 					}
-					
+          
 					if (literal_chan_read.count(2) ||  literal_chan_read.count(3))
 					{
 						lit_size = 4;
@@ -777,6 +824,8 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 					literal_chan_read.clear();
 					
 					match_size += lit_size;
+                    
+          result += "/////////////////////////////////////////////\n";
 				}
 			}
 			
