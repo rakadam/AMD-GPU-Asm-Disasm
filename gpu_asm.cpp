@@ -832,14 +832,6 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 			
 			data.erase(data.begin(), data.begin() + match_size);
 			result += "\n";
-			
-// 			if (match_tuple.tuple[0] == "ALU_WORD0")
-// 			if (check_field(data, match_tuple, "LAST"))
-// 			{
-// 				cout << p_str << endl;
-// 				cout << "LAST found" << endl;
-// 				break;
-// 			}
 		}
 		
 		if (match_num == 0)
@@ -857,18 +849,6 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		//cout << result << endl;
 		
 	}
-	
-/*	if (data.size() != 0)
-	{
-		cerr << result << endl;
-		cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
-		printf("0x%.8X\n", data[0]);
-		if (data.size() > 1)
-		{
-			printf("0x%.8X\n", data[1]);
-		}
-		throw runtime_error("Disassembling error");
-	}*/
 	
 	filter_prefix = "CF_";
 //	cout << "(" << result <<")" << endl;
