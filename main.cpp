@@ -33,10 +33,16 @@
  *    
  */
 
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
 #include <assert.h>
+#include <fcntl.h>
+#include <gelf.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "gpu_asm.hpp"
 #include "r800_def.hpp"
 
@@ -45,76 +51,151 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-//	system("cpp r800.def > r800.def.ii");
-//	ifstream f("r800.def.ii");
-	
-	string text = r800_def::str();//std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
-	
-	gpu_asm::asm_definition asmdef(text);
-	
-	gpu_assembler assembler(asmdef);
-	
-	vector<uint32_t> code;/* = 
-	{
-		0x00ac1f80,
-		0x101a2000,
-		0xefbeadde,
-		0x00000000,
-		0x00ac1f80,
-		0x101a2020,
-		0xdeadbeef,
-		0x00000000,
-		0x00a01f80,
-		0x101a2040,
-		0xadde0000,
-		0x00000000,
-		0x00a41f80,
-		0x101a2060,
-		0xefbe0000,
-		0x00000000
-	};*/
-	
-// 	FILE *f4 = fopen("gpu_bin.bin", "r");
-// 	FILE *f4 = fopen("ki.dat", "r");
-	
-	FILE *f4 = fopen(argv[1], "r");
-	assert(f4);
-	uint32_t val;
-	
-	fseek(f4, 0x0, SEEK_SET);
-	
-	while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
-	{
-		code.push_back(val);
-	}
-	
-	for (int i = 0; i < code.size(); i+=4)
-	{
-		//printf("%i : 0x%.8X 0x%.8X 0x%.8X 0x%.8X\n", i, code[i], code[i+1], code[i+2], code[i+3]);
-	}
-	
-	fclose(f4);
-	
-// 	code = gpu_asm::byte_mirror(code);
-	
-	
-	gpu_disassembler dis(asmdef);
-	
-// 	cout << "disassemble: " << endl 
-	cout << dis.disassemble(code) << endl << "end;" << endl;
-	/*
-	ifstream f2("second.asm");
-	
-	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
-	
-	for (int i = 0; i < codes.size(); i+=4)
-	{
-// 		printf("%i : 0x%.8X 0x%.8X 0x%.8X 0x%.8X\n", i, codes[i], codes[i+1], codes[i+2], codes[i+3]);
-	}
-	
-	FILE *f3 = fopen("ki.dat", "w");
-	
-	fwrite(&codes[0], 1, sizeof(uint32_t)*codes.size(), f3);
-	
-	fclose(f3);*/
+  assert(elf_version(EV_CURRENT) != EV_NONE);
+  
+  string text = r800_def::str();
+
+  gpu_asm::asm_definition asmdef(text);
+
+  gpu_assembler assembler(asmdef);
+
+  vector<uint32_t> code;
+
+  int f = open(argv[1], O_RDONLY);
+
+  if (f < 1)
+  {
+    cerr << "cannot open file: " << argv[1] << endl;
+    return 1;
+  }
+
+  Elf* elf = elf_begin(f, ELF_C_READ, NULL);
+
+  if (elf == NULL)
+  {
+    cerr << elf_errmsg(-1) << endl;
+    return 1;
+  }
+
+  assert(elf_kind(elf) != ELF_K_AR);
+
+  if (elf_kind(elf) == ELF_K_NONE)
+  {
+    cerr << "reading raw binary file" << endl;
+    
+    elf_end(elf);
+    close(f);
+    uint32_t val;
+    
+    FILE *f4 = fopen(argv[1], "r");
+      
+    while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
+    {
+      code.push_back(val);
+    }
+    
+    fclose(f4);
+  }
+  else
+  {
+    cerr << "reading elf file" << endl;
+    
+    Elf_Scn *scn;
+    Elf_Data *data;
+    size_t shstrndx;
+    GElf_Shdr shdr;
+
+    assert(elf_getshdrstrndx(elf, &shstrndx ) == 0);
+    
+    scn = NULL;
+    
+    while (( scn = elf_nextscn (elf, scn )) != NULL)
+    {
+      if ( gelf_getshdr ( scn , & shdr ) != & shdr )
+      {
+        cerr << "getshdr () failed : " << elf_errmsg(-1) << endl;
+        return 1;
+      }
+      
+      char *name;
+      
+      name = elf_strptr (elf, shstrndx, shdr.sh_name);
+      
+      assert(name);
+      
+      if (string(name) == ".text")
+      {
+        data = NULL;
+        data = elf_getdata(scn, data);
+        Elf* elf2 = elf_memory((char*)data->d_buf, data->d_size);
+        
+        if (elf_kind(elf2) != ELF_K_ELF)
+        {
+          cerr << "Not a valid amdgpu elf file" << endl;
+          return 1;
+        }
+
+        {
+          Elf_Scn *scn;
+          Elf_Data *data;
+          size_t shstrndx;
+          GElf_Shdr shdr;
+
+          assert(elf_getshdrstrndx(elf2, &shstrndx ) == 0);
+          
+          scn = NULL;
+          int tnum = 0;
+          
+          while (( scn = elf_nextscn (elf2, scn )) != NULL)
+          {
+            if ( gelf_getshdr ( scn , & shdr ) != & shdr )
+            {
+              cerr << "getshdr () failed : " << elf_errmsg(-1) << endl;
+              return 1;
+            }
+            
+            char *name;
+            
+            name = elf_strptr (elf2, shstrndx, shdr.sh_name);
+            
+            assert(name);
+            
+            if (string(name) == ".text")
+            {
+              tnum++;
+            }
+            
+            if (string(name) == ".text" and tnum == 2)
+            {
+              data = NULL;
+              data = elf_getdata(scn, data);
+              
+              uint32_t* payload_data = (uint32_t*)data->d_buf;
+              
+              for (int i = 0; i < data->d_size/sizeof(uint32_t); i++)
+              {
+                code.push_back(payload_data[i]);
+              }
+            }
+          }
+        }
+        
+        elf_end(elf2);
+      }
+    }
+    
+    elf_end(elf);
+    close(f);
+  }
+
+
+  if (code.size() == 0)
+  {
+    cerr << "Invalid input file: " << argv[1] << endl;
+    return 1;
+  }
+
+  gpu_disassembler dis(asmdef);
+
+  cout << dis.disassemble(code) << endl << "end;" << endl;
 }
