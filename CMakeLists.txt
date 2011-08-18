@@ -23,4 +23,5 @@ ADD_CUSTOM_COMMAND(OUTPUT r800_def.hpp
 	
 ADD_CUSTOM_COMMAND(OUTPUT r800.def.ii
 	COMMAND cpp r800.def > r800.def.ii
+	DEPENDS r800.def
  )

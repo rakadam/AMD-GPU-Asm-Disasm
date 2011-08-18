@@ -38,16 +38,17 @@
 #include <cstdlib>
 #include <assert.h>
 #include "gpu_asm.hpp"
+#include "r800_def.hpp"
 
 using namespace std;
 
 
 int main(int argc, char* argv[])
 {
-	system("cpp r800.def > r800.def.ii");
-	ifstream f("r800.def.ii");
+//	system("cpp r800.def > r800.def.ii");
+//	ifstream f("r800.def.ii");
 	
-	string text = std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+	string text = r800_def::str();//std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
 	
 	gpu_asm::asm_definition asmdef(text);
 	
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
 	
 	for (int i = 0; i < code.size(); i+=4)
 	{
-		printf("%i : 0x%.8X 0x%.8X 0x%.8X 0x%.8X\n", i, code[i], code[i+1], code[i+2], code[i+3]);
+		//printf("%i : 0x%.8X 0x%.8X 0x%.8X 0x%.8X\n", i, code[i], code[i+1], code[i+2], code[i+3]);
 	}
 	
 	fclose(f4);
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
 	
 // 	cout << "disassemble: " << endl 
 	cout << dis.disassemble(code) << endl << "end;" << endl;
-	
+	/*
 	ifstream f2("second.asm");
 	
 	auto codes = assembler.assemble(std::string(std::istreambuf_iterator<char>(f2), std::istreambuf_iterator<char>()));
@@ -115,5 +116,5 @@ int main(int argc, char* argv[])
 	
 	fwrite(&codes[0], 1, sizeof(uint32_t)*codes.size(), f3);
 	
-	fclose(f3);
+	fclose(f3);*/
 }

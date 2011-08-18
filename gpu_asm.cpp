@@ -584,7 +584,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			data.erase(data.begin(), data.begin() + match_size);
 		}
 		
-// 		cout << result << endl;
+//		cout << result << endl;
 		
 		if (clause_todo.size())
 		{
@@ -628,7 +628,6 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 			
 			throw runtime_error("Disassembling error");
 		}
-		
 		
 	} while (match_num);
 	
@@ -752,6 +751,11 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 					literal_chan_read.insert(check_field(data, match_tuple, "SRC1_CHAN"));
 				}
 				
+				if (check_field(data, match_tuple, "SRC2_SEL", "ALU_SRC_LITERAL", false))
+				{
+					literal_chan_read.insert(check_field(data, match_tuple, "SRC2_CHAN"));
+				}
+				
 				if (check_field(data, match_tuple, "LAST"))
 				{
 					int lit_size = 0;
@@ -801,7 +805,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 			throw runtime_error("Disassembling error");
 		}
 		
-// 		cout << result << endl;
+		//cout << result << endl;
 		
 	}
 	
@@ -818,6 +822,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	}*/
 	
 	filter_prefix = "CF_";
+//	cout << "(" << result <<")" << endl;
 	return result;
 }
 
@@ -979,6 +984,7 @@ std::string gpu_disassembler::parse_microcode(uint32_t code, const gpu_asm::micr
 		result += str_field;
 	}
 	
+//	cout << result << endl;
 /*	if (result != "")
 	{
 		result = format.name + "> " + result;
@@ -1143,7 +1149,7 @@ std::vector<uint32_t> gpu_asm::byte_mirror(std::vector<uint32_t> codes)
 	for (int i = 0; i < int(codes.size()); i++)
 	{
 		codes[i] = byte_mirror(codes[i]);
-		printf("%.8X\n", codes[i]);
+		//printf("%.8X\n", codes[i]);
 	}
 	
 	return codes;
@@ -1198,6 +1204,8 @@ std::string gpu_disassembler::parse_literals(const std::vector<uint32_t>& data, 
 {
 	char buf[100];
 	int pos = 0;
+	
+	buf[0] = 0;
 	
 	for (int i = offset; i < offset+size; i++)
 	{
