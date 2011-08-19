@@ -588,6 +588,7 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 		if (clause_todo.size())
 		{
+// 			cout << result << endl;
 			indent = 1;
 			result += disassemble_clause(orig_data, clause_todo.front());
 			indent = 0;
@@ -670,19 +671,21 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	
 // 	printf("%.8x\n", data.front());
 	
-	string filter_prefix2 = filter_prefix;
+	set<string> prefixes;
+	
+	prefixes.insert(filter_prefix);
 	
 	if (filter_prefix == "TEX_")
 	{
-		filter_prefix2 = "VTX_";
+		prefixes.insert("VTX_");
+		prefixes.insert("TMEM_");
 	}
 	
 	if (filter_prefix == "VTX_")
 	{
-		filter_prefix2 = "TEX_";
+		prefixes.insert("TEX_");
+		prefixes.insert("TMEM_");
 	}
-	
-// 	cout << filter_prefix2 << endl;
 	
 // 	cout << clause.addr*2 << " ";
 	
@@ -704,8 +707,13 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		
 		for (auto i = asmdef.microcode_format_tuples.begin(); i != asmdef.microcode_format_tuples.end(); i++)
 		{
-			if (filter_prefix != i->second.tuple.front().substr(0, filter_prefix.size()) and 
+/*			if (filter_prefix != i->second.tuple.front().substr(0, filter_prefix.size()) and 
 				filter_prefix2 != i->second.tuple.front().substr(0, filter_prefix2.size()))
+			{
+				continue;
+			}*/
+			
+			if (!has_prefix(i->second.tuple.front(), prefixes))
 			{
 				continue;
 			}
@@ -836,12 +844,24 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 		
 		if (match_num == 0)
 		{
+			cout << result << endl;
+			for (auto i = asmdef.microcode_format_tuples.begin(); i != asmdef.microcode_format_tuples.end(); i++)
+			{
+				if (!has_prefix(i->second.tuple.front(), prefixes))
+				{
+					continue;
+				}
+			
+				try_tuple_fit(data, i->second, true);
+				
+			}
+			
 			cerr << "Undefined instruction: " << endl;
 			
-			printf("%.8X\n", data[0]);
+			fprintf(stderr, "%.8X\n", data[0]);
 			if (data.size() > 1)
 			{
-				printf("%.8X\n", data[1]);
+				fprintf(stderr, "%.8X\n", data[1]);
 			}
 			throw runtime_error("Disassembling error");
 		}
@@ -926,7 +946,7 @@ std::string gpu_disassembler::get_enum_value(uint32_t code, gpu_asm::field field
 	throw runtime_error(ss.str());
 }
 
-int gpu_disassembler::try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple)
+int gpu_disassembler::try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, bool verbose)
 {
 	if (int(data.size()) < tuple.size_in_bits / 32)
 		return 0;
@@ -936,6 +956,11 @@ int gpu_disassembler::try_tuple_fit(const std::vector<uint32_t>& data, const gpu
 	for (int i = 0; i < int(tuple.tuple.size()); i++)
 	{
 		codes[tuple.tuple[i]] = data[i];
+	}
+	
+	if (verbose)
+	{
+		cerr << "fitting: " << tuple.name << endl;
 	}
 	
 	for (auto i = tuple.constraints.begin(); i != tuple.constraints.end(); i++)
@@ -957,7 +982,20 @@ int gpu_disassembler::try_tuple_fit(const std::vector<uint32_t>& data, const gpu
 		}
 		
 		if (value != enval.value_bound.start)
+		{
+			if (verbose)
+			{
+				cerr << "-\tcontraint mismatch: " << i->first.first << "." << i->first.second << "." << i->second << " = " << enval.value_bound.start  << " != " << value << endl;
+			}
 			return 0;
+		}
+		else
+		{
+			if (verbose)
+			{
+				cerr << "+\tcontraint match: " << i->first.first << "." << i->first.second << "." << i->second << " = " << enval.value_bound.start  << " != " << value << endl;
+			}
+		}
 	}
 	
 	return tuple.size_in_bits;
@@ -1254,4 +1292,17 @@ std::string gpu_disassembler::gen_indent(int offset)
 	}
 	
 	return s;
+}
+
+bool gpu_disassembler::has_prefix(std::string str, std::set<std::string> prefix_set) const
+{
+	for (auto i = prefix_set.begin(); i != prefix_set.end(); i++)
+	{
+		if (str.substr(0, i->length()) == *i)
+		{
+			return true;
+		}
+	}
+	
+	return false;
 }

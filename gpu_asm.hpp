@@ -93,7 +93,7 @@ public:
 	gpu_asm::field get_field(std::string format_name, std::string field_name);
 	long get_field_value(uint32_t code, gpu_asm::bound bound);
 	std::string get_enum_value(uint32_t code, gpu_asm::field);
-	int try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
+	int try_tuple_fit(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple, bool verbose = false);
 	std::string parse_tuple(const std::vector<uint32_t>& data, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_microcode(uint32_t code, const gpu_asm::microcode_format& format, const gpu_asm::microcode_format_tuple& tuple);
 	std::string parse_field(uint32_t code, gpu_asm::field, gpu_asm::microcode_format_tuple);
@@ -103,6 +103,7 @@ public:
 	std::string parse_literals(const std::vector<uint32_t>& data, int offset, int size);
 	
 	std::string gen_indent(int offset);
+	bool has_prefix(std::string str, std::set<std::string> prefix_set) const;
 };
 
 namespace gpu_asm

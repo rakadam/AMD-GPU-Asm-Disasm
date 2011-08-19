@@ -708,7 +708,7 @@ end microcode;
 //--------------------------------------------------------------------------
 // MEM_RD_WORD0
 //--------------------------------------------------------------------------
-microcode MEM_RD_WORD0(32):
+microcode TMEM_RD_WORD0(32):
   enum(3) MEM_OP:
     MEM_RD_SCRATCH 0;
     MEM_RD_SCATTER 2;
@@ -744,7 +744,7 @@ end microcode;
 //--------------------------------------------------------------------------
 // MEM_RD_WORD1
 //--------------------------------------------------------------------------
-microcode MEM_RD_WORD1(32):
+microcode TMEM_RD_WORD1(32):
   enum(3) CHAN_SEL:
     SEL_X 0;
     SEL_Y 1;
@@ -789,7 +789,7 @@ end microcode;
 //--------------------------------------------------------------------------
 // MEM_RD_WORD2
 //--------------------------------------------------------------------------
-microcode MEM_RD_WORD2(32):
+microcode TMEM_RD_WORD2(32):
   enum(2) ENDIAN_SWAP:
     ENDIAN_NONE 0 default;
     ENDIAN_8IN16 1;
@@ -2310,14 +2310,15 @@ FTTCC64_TEMPLATE( SET_TEXTURE_OFFSETS );
 //--------------------------------------------------------------------------
 #define MEM_RD_TEMPLATE( instr ) \
     tuple instr (128): \
-    microcode MEM_RD_WORD0; \
-    microcode MEM_RD_WORD1; \
-    microcode MEM_RD_WORD2; \
+    microcode TMEM_RD_WORD0; \
+    microcode TMEM_RD_WORD1; \
+    microcode TMEM_RD_WORD2; \
     microcode padding_32; \
+    option DST_GPR_NODEFAULT; \
     \
     constraints: \
-      MEM_RD_WORD0.VC_INST == VC_INST_MEM;\
-      MEM_RD_WORD0.MEM_OP  == instr; \
+      TMEM_RD_WORD0.VC_INST == VC_INST_MEM;\
+      TMEM_RD_WORD0.MEM_OP  == instr; \
     end constraints; \
     end tuple
 
