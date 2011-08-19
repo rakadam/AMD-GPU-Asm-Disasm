@@ -12,6 +12,7 @@ SET(r800_asm_lib_SRC
 )
 
 ADD_EXECUTABLE(as_r800 ${r800_asm_lib_SRC} asm_cui.cpp)
+TARGET_LINK_LIBRARIES(as_r800 elf)
 
 ADD_EXECUTABLE(dis_r800 ${r800_asm_lib_SRC} main.cpp)
 TARGET_LINK_LIBRARIES(dis_r800 elf)

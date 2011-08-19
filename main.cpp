@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
       name = elf_strptr (elf, shstrndx, shdr.sh_name);
       
       assert(name);
-      
+
       if (string(name) == ".text")
       {
         data = NULL;
