@@ -36,6 +36,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <assert.h>
 #include <fcntl.h>
@@ -47,6 +48,94 @@
 #include "r800_def.hpp"
 
 using namespace std;
+
+bool prefix(string str, string the_prefix)
+{
+  assert(the_prefix.size());
+  return str.substr(0, the_prefix.length()) == the_prefix;
+}
+
+void process_gallium_shader(vector<string> lines)
+{
+  bool bytecode = false;
+  vector<uint32_t> code;
+  
+  for (int i = 0; i < int(lines.size()); i++)
+  {
+    if (prefix(lines[i], "-----------") or prefix(lines[i], "____________"))
+    {
+      continue;
+    }
+    
+    if (prefix(lines[i], "bytecode"))
+    {
+      bytecode = true;
+      i++;
+      continue;
+    }
+    
+    if (!bytecode)
+    {
+      cout << "// " << lines[i] << endl;
+    }
+    
+    if (bytecode)
+    {
+      int index;
+      int value;
+      
+      if (sscanf(lines[i].c_str(), "%d %x", &index, &value) == 2)
+      {
+//         cout << lines[i] << " " << index << " " << value << endl;
+        
+        if (index >= code.size())
+        {
+          code.resize(index+1);
+        }
+        
+        code.at(index) = value;
+      }
+      else
+      {
+        cerr << "parse failure: " << lines[i] << endl;
+      }
+    }
+  }
+
+//   for (int i = 0; i < code.size(); i++)
+//     printf("%.8x\n", code[i]);
+  
+  gpu_asm::asm_definition asmdef(r800_def::str());
+  
+  gpu_disassembler dis(asmdef);
+
+  cout << dis.disassemble(code) << endl << "end;" << endl;
+
+}
+
+void process_gallium_dump(string text)
+{
+  cerr << "reading gallium shader dump" << endl;
+  
+  stringstream ss(text);
+  
+  vector<string> lines;
+  
+  while (ss.good())
+  {
+    char buf[1024];
+    ss.getline(buf, sizeof(buf));
+    string s(buf);
+    
+    lines.push_back(s);
+    
+    if (prefix(s, "__________________"))
+    {
+      process_gallium_shader(lines);
+      lines.clear();
+    }
+  }
+}
 
 
 int main(int argc, char* argv[])
@@ -81,13 +170,36 @@ int main(int argc, char* argv[])
 
   if (elf_kind(elf) == ELF_K_NONE)
   {
+    FILE *f4;
+    
+    f4 = fopen(argv[1], "r");
+    
+    assert(f4);
+    
+    string str;
+    char ch;
+    
+    while (fread(&ch, 1, 1, f4) > 0)
+    {
+      str += ch;
+    }
+    
+    fclose(f4);
+    
+    if (str.find("_____________") != string::npos and str.find("bytecode") != string::npos and 
+      str.find("--------------") != string::npos)
+    {
+      process_gallium_dump(str);
+      return 0;
+    }
+    
     cerr << "reading raw binary file" << endl;
     
     elf_end(elf);
     close(f);
     uint32_t val;
     
-    FILE *f4 = fopen(argv[1], "r");
+    f4 = fopen(argv[1], "r");
       
     while (fread(&val, 1, sizeof(uint32_t), f4) > 0)
     {

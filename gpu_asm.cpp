@@ -575,6 +575,10 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 			result += "\n";
 			
+      if (match_tuple.name == "RETURN")
+      {
+        break;
+      }
 // 			if (match_tuple.tuple[0] == "CF_WORD0")
 			if (check_field(data, match_tuple, "END_OF_PROGRAM", "", false))
 			{
@@ -588,11 +592,12 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 		if (clause_todo.size())
 		{
-// 			cout << result << endl;
+//      cout << result << endl;
 			indent = 1;
 			result += disassemble_clause(orig_data, clause_todo.front());
 			indent = 0;
 			clause_todo.clear();
+//       cerr << "claue done " << orig_data.size() << " " << data.size() << endl;
 		}
 		
 		int index = (orig_data.size() - data.size());
@@ -619,7 +624,8 @@ std::string gpu_disassembler::disassemble_cf(std::vector<uint32_t> data)
 		
 		if (match_num == 0)
 		{
-			cerr << "Disassembling error at dword: " << orig_size - data.size() << endl;
+      cerr << result << endl;
+			cerr << "Disassembling error at CF dword: " << orig_size - data.size() << endl;
 			printf("0x%.8X\n", data[0]);
 			
 			if (data.size() > 1)
@@ -653,7 +659,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	int orig_size = data.size();
 	
 	int match_num;
-	
+
   if (clause.prefix == "ALU")
   {
     result += "/////////////////////////////////////////////\n";
@@ -665,7 +671,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 	
 	set<int> literal_chan_read;
 	
-// 	cout << data.size() << " " << clause.addr << " " << clause.len << " " << clause.prefix << endl;
+//  	cout << data.size() << " " << clause.addr << " " << clause.len << " " << clause.prefix << endl;
 	
 	data.erase(data.begin(), data.begin()+clause.addr*2);
 	
@@ -837,7 +843,7 @@ std::string gpu_disassembler::disassemble_clause(std::vector<uint32_t> data, tcl
 				}
 			}
 			
-			
+// 			cerr << "eat: " << data.size() << " " << match_size << endl;
 			data.erase(data.begin(), data.begin() + match_size);
 			result += "\n";
 		}

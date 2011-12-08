@@ -1273,6 +1273,7 @@ microcode VTX_WORD1_GPR(32):
   enum(6) DATA_FORMAT:
     FMT_INVALID 0 default;
     FMT_8 1;
+    FMT_32_FLOAT 14;
     FMT_32_32_FLOAT 30;
     FMT_32_32_32_32 34;
     FMT_32_32_32_32_FLOAT 35;
