@@ -1057,8 +1057,8 @@ microcode CF_ALU_WORD0_EXT(32):
 
   enum(2) KCACHE_MODE2:
     CF_KCACHE_NOP;
-    CF_KCACHE_LOCK_0; // FIXME: check this field
-    CF_KCACHE_LOCK_1; // FIXME: check this field
+    CF_KCACHE_LOCK_1;
+    CF_KCACHE_LOCK_2;
     CF_KCACHE_LOCK_LOOP_INDEX;
   end enum;
 
@@ -1079,8 +1079,8 @@ end microcode;
 microcode CF_ALU_WORD1_EXT(32):
   enum(2) KCACHE_MODE3:
     CF_KCACHE_NOP;
-    CF_KCACHE_LOCK_0; // FIXME: check this field
-    CF_KCACHE_LOCK_1; // FIXME: check this field
+    CF_KCACHE_LOCK_1;
+    CF_KCACHE_LOCK_2;
     CF_KCACHE_LOCK_LOOP_INDEX;
   end enum;
 
@@ -1906,7 +1906,7 @@ CF_TEMPLATE( EMIT_VERTEX );
 CF_TEMPLATE_OPT( GDS, ADDR_IS_MEM_GDS);
 CF_TEMPLATE( HALT );
 CF_TEMPLATE_OPT( JUMP, ADDR_IS_CF);
-//  ...( JUMPTABLE ); // FIXME: This is 29 but the doc says 28
+CF_TEMPLATE( JUMPTABLE );
 CF_TEMPLATE( KILL );
 //   CF_TEMPLATE( LOOP_BREAK ); 
 //   CF_TEMPLATE( LOOP_CONTINUE ); 
@@ -1922,17 +1922,14 @@ CF_TEMPLATE( RETURN );
 //--------------------------------------------------------------------------
 // Export template
 //--------------------------------------------------------------------------
-// FIXME: How to solve that the second microcode can be two type of microcodes
 #define CF_EXPORT_TEMPLATE( instr ) \
     tuple instr (64): \
     microcode CF_ALLOC_EXPORT_WORD0; \
-    /* microcode CF_ALLOC_EXPORT_WORD1_BUF; WTF WTF WTF?*/\
     microcode CF_ALLOC_EXPORT_WORD1_SWIZ; \
     option RW_GPR_NODEFAULT; \
     option INDEX_GPR_NODEFAULT; \
     \
     constraints: \
-      /* CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr; */ \
       CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_ ## instr; \
     end constraints; \
     end tuple \
@@ -1940,10 +1937,8 @@ CF_TEMPLATE( RETURN );
 //--------------------------------------------------------------------------
 // Export instructions
 //--------------------------------------------------------------------------
-CF_EXPORT_TEMPLATE( EXPORT ); // FIXME: This value must be 39 by the
-// doc but it will be 83
-CF_EXPORT_TEMPLATE( EXPORT_DONE ); // FIXME: This value must be 40 by the
-// doc but it will be 89
+CF_EXPORT_TEMPLATE( EXPORT );
+CF_EXPORT_TEMPLATE( EXPORT_DONE );
 
 //--------------------------------------------------------------------------
 // CF GWS template
@@ -1970,18 +1965,15 @@ CF_GWS_TEMPLATE( GWS_SEMA_V );
 //--------------------------------------------------------------------------
 // Memory Export instructions
 //--------------------------------------------------------------------------
-// FIXME: How to solve that the second microcode can be two type of microcodes
 tuple MEM_EXPORT (64):
   microcode CF_ALLOC_EXPORT_WORD0;
   microcode CF_ALLOC_EXPORT_WORD1_BUF;
-  /* microcode CF_ALLOC_EXPORT_WORD1_SWIZ; WTF WTF WTF?*/
   option ARRAY_SIZE_MEANS_NOTHING;
 
   constraints:
     CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_EXPORT;
-  /* CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_MEM_EXPORT;*/
-
   end constraints;
+  
 end tuple;
 
 tuple MEM_EXPORT_COMBINED (64):
@@ -2019,7 +2011,7 @@ MEM_RAT_TEMPLATE( MEM_RAT_COMBINED_CACHELESS );
 #define MEM_TEMPLATE( instr ) \
     tuple instr (64): \
     microcode CF_ALLOC_EXPORT_WORD0; \
-    microcode CF_ALLOC_EXPORT_WORD1_BUF; /*FIXME: Doc says SWIZ*/ \
+    microcode CF_ALLOC_EXPORT_WORD1_BUF; \
     \
     constraints: \
       CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_ ## instr; \
@@ -2054,17 +2046,14 @@ MEM_TEMPLATE( MEM_STREAM3_BUF3 );
 //--------------------------------------------------------------------------
 // Memory scratch instruction
 //--------------------------------------------------------------------------
-// FIXME: How to solve that the second microcode can be two type of microcodes
-// WTF WTF WTF?
 tuple MEM_WR_SCRATCH (64):
-microcode CF_ALLOC_EXPORT_WORD0;
-microcode CF_ALLOC_EXPORT_WORD1_BUF;
-/* microcode CF_ALLOC_EXPORT_WORD1_SWIZ; WTF? */
+  microcode CF_ALLOC_EXPORT_WORD0;
+  microcode CF_ALLOC_EXPORT_WORD1_BUF;
 
-constraints:
-CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_WR_SCRATCH;
-/* CF_ALLOC_EXPORT_WORD1_SWIZ.CF_INST == CF_INST_MEM_SCRATCH;*/
-end constraints;
+  constraints:
+    CF_ALLOC_EXPORT_WORD1_BUF.CF_INST == CF_INST_MEM_WR_SCRATCH;
+  end constraints;
+  
 end tuple;
 
 //--------------------------------------------------------------------------
@@ -2451,7 +2440,7 @@ FTTCC_TEMPLATE( GATHER4_C_O );
 FTTCC_TEMPLATE( GATHER4_O );
 FTTCC_TEMPLATE( GET_GRADIENTS_H );
 FTTCC_TEMPLATE( GET_GRADIENTS_V );
-FTTCC_TEMPLATE( GET_COMP_TEX_LOD ); // FIXME: The instruction name and opcode name differs
+FTTCC_TEMPLATE( GET_COMP_TEX_LOD );
 FTTCC_TEMPLATE( GET_NUMBER_OF_SAMPLES );
 FTTCC_TEMPLATE( GET_TEXTURE_RESINFO );
 FTTCC_TEMPLATE( KEEP_GRADIENTS );
