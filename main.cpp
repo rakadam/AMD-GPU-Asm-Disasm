@@ -110,6 +110,7 @@ void process_gallium_shader(vector<string> lines)
   gpu_disassembler dis(asmdef);
 
   cout << dis.disassemble(code) << endl << "end;" << endl;
+  cout << "//__________________________________________________________" << endl;
 
 }
 
