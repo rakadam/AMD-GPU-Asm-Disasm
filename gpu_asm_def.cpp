@@ -431,15 +431,20 @@ std::string asm_definition::clear_comments(std::string text)
 
 	std::vector<char> result;
 	
-	auto comment_p1 = confix("/*", "*/")[*(char_ - "*/")];
-	auto comment_p2 = confix("//", eol)[*(char_ - eol)];
-	auto comment_p3 = confix("(*", "*)")[*(char_ - "*)")];
-	auto comment_p4 = confix("#", eol)[*(char_ - eol)];
+	#define comment_p1 ( confix("/*", "*/")[*(char_ - "*/")])
+	#define comment_p2 ( confix("//", eol)[*(char_ - eol)])
+	#define comment_p3 ( confix("(*", "*)")[*(char_ - "*)")])
+	#define comment_p4 ( confix("#", eol)[*(char_ - eol)])
 
 	auto begin = text.begin();
 	auto end = text.end();
 	
 	phrase_parse(begin, end, *char_[push_back(ref_(result), _1)], comment_p1 | comment_p2 | comment_p3 | comment_p4);
+	
+	#undef comment_p1
+	#undef comment_p2
+	#undef comment_p3
+	#undef comment_p4
 	
 	return std::string(result.begin(), result.end());
 }
@@ -469,23 +474,23 @@ asm_definition::asm_definition(std::string text)
 	
 	std::map<std::string, std::set<enum_val> > enums;
 	
-	auto name = lexeme[+(alnum | char_('_'))];
-	auto header = "architecture" > name[assign_str(arch_techname)] > name[assign_str(arch_codename)] > ';';
-	auto bbound_p = ('(' >> bpos_ >> ')') | ('(' >> bstart_ >> ':' >> bstop_ >> ')'); 
-	auto bbound2_p = '(' >> bstart2_ >> ':' >> bstop2_ >> ')'; 
-	auto bound_p = (bstart_ >> ':' >> bstop_) | bpos_; 
-	auto size_p = ('(' > int_[assign_int(attr.cur_size)] > ')');
+	#define name ( lexeme[+(alnum | char_('_'))])
+	#define header ( "architecture" > name[assign_str(arch_techname)] > name[assign_str(arch_codename)] > ';')
+	#define bbound_p ( ('(' >> bpos_ >> ')') | ('(' >> bstart_ >> ':' >> bstop_ >> ')'))
+	#define bbound2_p ( '(' >> bstart2_ >> ':' >> bstop2_ >> ')')
+	#define bound_p ( (bstart_ >> ':' >> bstop_) | bpos_)
+	#define size_p ( ('(' > int_[assign_int(attr.cur_size)] > ')'))
 	
-	auto debug = lexeme[(*char_)[print_str()]];
-	auto enum_elem = !lit("end") > name_c(elem) > -bound_p > -lit("default")[set_default_elem] > lit(';')[new_elem];
-	auto enum_def = "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';';
-	auto field = "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p  > lit(';')[new_field];
-	auto microcode_def = "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';';
-	auto microcode_use = "microcode" > name_(micro) > lit(';')[push_micro];
-	auto option = "option" > name[push_option] > lit(';');
-	auto constraint_def = !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint];
-	auto constraints_def = "constraints" >> lit(':') > *constraint_def > "end" > "constraints" > ';';
-	auto tuple_def = "tuple" > name_c(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > *option > -constraints_def > "end" > "tuple" > ';';
+	#define debug ( lexeme[(*char_)[print_str()]])
+	#define enum_elem ( !lit("end") > name_c(elem) > -bound_p > -lit("default")[set_default_elem] > lit(';')[new_elem])
+	#define enum_def ( "enum" > size_p > name_(enum) > lit(':')[new_enum] > *enum_elem > "end" > "enum" > ';')
+	#define field ( "field" > name_c(field) > bbound_p > name_(type) > -bbound2_p  > lit(';')[new_field])
+	#define microcode_def ( "microcode" > name_(micro) >  size_p > lit(':')[new_microcode]  > *(enum_def | field)  > "end" > "microcode" > ';')
+	#define microcode_use ( "microcode" > name_(micro) > lit(';')[push_micro])
+	#define option ( "option" > name[push_option] > lit(';'))
+	#define constraint_def ( !lit("end") > name_(micro) > '.' > name_(field) > "==" > name_(elem) > lit(';')[new_constraint])
+	#define constraints_def ( "constraints" >> lit(':') > *constraint_def > "end" > "constraints" > ';')
+	#define tuple_def ( "tuple" > name_c(tuple) >  size_p > lit(':')[new_tuple]  > *microcode_use > *option > -constraints_def > "end" > "tuple" > ';')
 	
 	auto begin = text.begin();
 	auto end = text.end();
@@ -498,6 +503,22 @@ asm_definition::asm_definition(std::string text)
 	
 	try{
 		phrase_parse(begin, end, eps > header > *(microcode_def | tuple_def) > "end" > ';' > eoi, space);
+	#undef	name
+	#undef	header
+	#undef	bbound_p
+	#undef	bbound2_p
+	#undef	bound_p
+	#undef	size_p
+	#undef	debug
+	#undef	enum_elem
+	#undef	enum_def
+	#undef	field
+	#undef	microcode_def
+	#undef	microcode_use
+	#undef	option
+	#undef	constraint_def
+	#undef	constraints_def
+	#undef	tuple_def
 	}
 	catch (expectation_failure<decltype(begin)> const& x)
 	{

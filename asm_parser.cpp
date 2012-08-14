@@ -56,14 +56,18 @@ static std::string clear_comments(std::string text)
 
 	std::vector<char> result;
 	
-	auto comment_p1 = confix("/*", "*/")[*(char_ - "*/")];
-	auto comment_p2 = confix("//", eol)[*(char_ - eol)];
-	auto comment_p3 = confix("(*", "*)")[*(char_ - "*)")];
+	#define comment_p1 (confix("/*", "*/")[*(char_ - "*/")])
+	#define comment_p2 (confix("//", eol)[*(char_ - eol)])
+	#define comment_p3 (confix("(*", "*)")[*(char_ - "*)")])
 
 	auto begin = text.begin();
 	auto end = text.end();
 	
 	phrase_parse(begin, end, *char_[push_back(boost::phoenix::ref(result), _1)], comment_p1 | comment_p2 | comment_p3);
+	
+	#undef comment_p1
+	#undef comment_p2
+	#undef comment_p3
 	
 	return std::string(result.begin(), result.end());
 }
@@ -260,11 +264,11 @@ std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
 	
 	text = clear_comments(text);
 	
-	auto name = lexeme[+(alnum | char_('_'))];
-	auto num = '(' > (int_[set_num] | (lit('@') > name[set_field_label])) > ')';
-	auto field = name[new_field] > -('.' > name[set_enum]) > -(num);
-	auto microcode = !(name >> ':') >> !lit('@') >> !(lit("end") > ";") >> *field > ';';
-	auto instruction = -(lit('@') > name[assign_str(future_label)]) >> !(lit("end") > ";") >> (name >> ':')[new_instruction] > *microcode;
+	#define name ( lexeme[+(alnum | char_('_'))])
+	#define num ( '(' > (int_[set_num] | (lit('@') > name[set_field_label])) > ')')
+	#define field ( name[new_field] > -('.' > name[set_enum]) > -(num))
+	#define microcode ( !(name >> ':') >> !lit('@') >> !(lit("end") > ";") >> *field > ';')
+	#define instruction ( -(lit('@') > name[assign_str(future_label)]) >> !(lit("end") > ";") >> (name >> ':')[new_instruction] > *microcode)
 	
 	auto begin = text.begin();
 	auto end = text.end();
@@ -277,6 +281,11 @@ std::vector<gpu_asm::instruction> parse_asm_text(std::string text)
 	
 	try{
 		phrase_parse(begin, end, eps > *instruction > "end" > ";", space);
+	#undef name
+	#undef num
+	#undef field
+	#undef microcode
+	#undef instruction
 	} catch (expectation_failure<decltype(begin)> const& x)
 	{
 		std::cout << "expected: "; print_info(x.what_);
@@ -365,16 +374,20 @@ void parse_field_value(std::string text, long offset, std::string& name)
 	}
 	
 	
-	auto num = int_[boost::phoenix::ref(offset) = _1];
-	auto name_p = lexeme[+(alnum | char_('_'))][assign_str(name)];
-	auto offset_p = '(' > num > ')';
-	auto value = num | (name_p >> -offset_p);
+	#define num ( int_[boost::phoenix::ref(offset) = _1])
+	#define  name_p ( lexeme[+(alnum | char_('_'))][assign_str(name)])
+	#define offset_p ( '(' > num > ')')
+	#define value ( num | (name_p >> -offset_p))
 	
 	auto begin = text.begin();
 	auto end = text.end();
 
 	try{
 		phrase_parse(begin, end, eps > value, space);
+	#undef num
+	#undef name_p
+	#undef offset_p
+	#undef value
 	} catch (expectation_failure<decltype(begin)> const& x)
 	{
 		cout << "expected: "; print_info(x.what_);
